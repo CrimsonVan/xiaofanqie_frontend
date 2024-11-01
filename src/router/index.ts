@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-
+import layout from '../views/layout/index.vue'
 const router = createRouter({
   // history: createWebHistory(import.meta.env.BASE_URL),
   //路由模式hash
@@ -8,16 +8,33 @@ const router = createRouter({
     {
       //登录成功以后展示数据的路由
       path: '/',
-      component: () => import('../views/layout/index.vue'),
-      name: 'layout'
+      component: layout,
+      name: 'layout',
+      redirect: '/home',
+      children: [
+        { path: '/home', component: () => import('../views/layout/home/index.vue') }
+        // { path: "/chat", component: () => import("../views/layout/chat.vue") },
+        // {
+        //   path: "/myself",
+        //   component: () => import("../views/layout/myself.vue"),
+        // },
+        // {
+        //   path: "/social",
+        //   component: () => import("../views/layout/social.vue"),
+        // },
+      ]
     },
     {
       path: '/login',
       component: () => import('../views/login/index.vue'),
       name: 'login'
+    },
+    {
+      path: '/detail',
+      component: () => import('../views/detail/index.vue'),
+      name: 'detail'
     }
   ]
 })
-// console.log(xx)
 
 export default router

@@ -5,7 +5,6 @@ const countStore = useCountStore()
 const changeColor = () => {
   countStore.changeNum()
 }
-
 changeColor()
 // console.log(x)
 </script>
