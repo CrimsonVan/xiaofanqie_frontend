@@ -12,8 +12,10 @@ const router = createRouter({
       name: 'layout',
       redirect: '/home',
       children: [
-        { path: '/home', component: () => import('../views/layout/home/index.vue') }
-        // { path: "/chat", component: () => import("../views/layout/chat.vue") },
+        { path: '/home', component: () => import('../views/layout/home/index.vue') },
+        { path: '/msg', component: () => import('../views/layout/msg/index.vue') },
+        { path: '/myself', component: () => import('../views/layout/myself/index.vue') }
+
         // {
         //   path: "/myself",
         //   component: () => import("../views/layout/myself.vue"),
@@ -29,6 +31,7 @@ const router = createRouter({
       component: () => import('../views/login/index.vue'),
       name: 'login'
     },
+    { path: '/chat', component: () => import('../views/chat/index.vue'), name: 'chat' },
     {
       path: '/detail',
       component: () => import('../views/detail/index.vue'),

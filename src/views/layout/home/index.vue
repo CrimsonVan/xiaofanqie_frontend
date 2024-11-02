@@ -1,4 +1,13 @@
 <template>
+  <van-nav-bar :fixed="true" title="发现">
+    <template #left>
+      <van-icon name="wap-nav" size="18" />
+    </template>
+    <template #right>
+      <van-icon name="search" size="18" />
+    </template>
+  </van-nav-bar>
+  <div class="safeTop"></div>
   <Waterfall
     :delay="5"
     :posDuration="10"
@@ -250,22 +259,27 @@ function onBottom() {
   }
   // 获取可视高度
   let clientHeight = document.documentElement.clientHeight
-  console.log('打印高度', clientHeight)
+  // console.log('打印高度', clientHeight)
 
   // 获取滚动高度
   let scrollTop = document.documentElement.scrollTop
-  console.log('打印scrollTop', scrollTop)
+  // console.log('打印scrollTop', scrollTop)
 
   // 滚动条高度
   let scrollHeight = document.documentElement.scrollHeight
   if (clientHeight + scrollTop >= scrollHeight - 170) {
-    console.log('触底之前', waterfallList.value.length)
+    // console.log('触底之前', waterfallList.value.length)
     waterfallList.value = [...waterfallList.value, ...testList.value]
     console.log('触底之后', waterfallList.value.length)
   }
 }
 </script>
 <style lang="scss" scoped>
+.safeTop {
+  width: 100%;
+  background-color: #f5f5f5;
+  height: 46px;
+}
 .waterfall-list[data-v-1c4c57b0] {
   background-color: #f5f5f5;
   .card {
