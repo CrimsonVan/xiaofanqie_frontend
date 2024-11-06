@@ -16,7 +16,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterView } from 'vue-router'
-
+import socket from '../../utils/connectSocket'
+import { useNumStore } from '@/stores'
+const userStore = useNumStore()
+socket.emit('join', userStore.userInfo.username)
 const active = ref('home')
 </script>
 <style lang="scss" scoped>

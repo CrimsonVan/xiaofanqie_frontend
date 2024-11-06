@@ -1,40 +1,92 @@
 <template>
   <div class="comment-part">
-    <img
-      class="comment-avatar"
-      src="https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg"
-      alt=""
-    />
+    <img class="comment-avatar" :src="commentInfo?.avatar" alt="" />
     <div class="comment-content">
-      <div class="comment-content-top">AAAA辣椒炒肉董事长</div>
+      <div class="comment-content-top">{{ commentInfo?.nick_name }}</div>
       <div class="comment-content-middle">
-        啊打发打发单纯的，大幅度反对法大幅度的手段？对付大苏打真的有用吗。的撒法地方沙发沙发沙发的发射点
+        {{ commentInfo?.content }}
       </div>
-      <div class="comment-content-data">昨天 07:06 云南 回复</div>
+      <div class="comment-content-data">
+        昨天 07:06 云南 <span @click="sendFather(commentInfo, 1)">回复</span>
+      </div>
     </div>
     <div class="comment-like">
       <van-icon name="like-o" />
       <div class="comment-like-num">67</div>
     </div>
   </div>
-  <div v-if="true" class="reply-num"><span style="color: #ccc">一</span> 展开7条回复</div>
-  <div v-else class="reply-part">
-    <img
-      class="reply-avatar"
-      src="https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg"
-      alt=""
-    />
-    <div class="reply-content">
-      <div class="reply-content-top">BBBB火鸡面董事长</div>
-      <div class="reply-content-middle">啊打发打发单纯的，大幅度反对法发沙发沙发的发射点</div>
-      <div class="reply-content-data">昨天 11:46 美国 回复</div>
-    </div>
-    <div class="reply-like">
-      <van-icon name="like-o" />
-      <div class="reply-like-num">67</div>
+  <!-- 子评论显示区域 -->
+  <div
+    v-if="!isShowChild && commentInfo?.child_length > 0"
+    @click="changeChildShow(commentInfo?.post_id, commentInfo?.comment_id)"
+    class="reply-num"
+  >
+    <span style="color: #ccc">一</span> 展开{{ commentInfo?.child_length }}条回复
+  </div>
+  <div v-else class="reply">
+    <div v-for="item in childArr" :key="item.comment_id" class="reply-part">
+      <img class="reply-avatar" :src="item?.avatar" alt="" />
+      <div class="reply-content">
+        <div class="reply-content-top">{{ item?.nick_name }}</div>
+        <div class="reply-content-middle">
+          <span style="color: #388aef" v-if="item?.reply_nickname !== '0'"
+            >@{{ item?.reply_nickname }}:</span
+          >{{ item?.content }}
+        </div>
+        <div class="reply-content-data">
+          昨天 11:46 美国 <span @click="sendFather(item, 2)">回复</span>
+        </div>
+      </div>
+      <div class="reply-like">
+        <van-icon name="like-o" />
+        <div class="reply-like-num">67</div>
+      </div>
     </div>
   </div>
 </template>
+<script lang="ts" setup>
+import { ref, defineExpose } from 'vue'
+import { getSecondCommentService } from '@/api/comments'
+const isShowChild = ref(false) //是否显示子评论
+const childArr = ref() //子评论
+let props = defineProps({
+  commentInfo: {
+    type: Object
+  }
+})
+const changeChildShow = async (post_id: any, parent_comment_id: any) => {
+  isShowChild.value = true
+  let childRes = await getSecondCommentService({
+    post_id: post_id,
+    parent_comment_id: parent_comment_id
+  })
+  childArr.value = childRes.data.data
+  console.log('打印子评论', childArr.value)
+}
+const emit = defineEmits(['sendInfo'])
+const sendFather = (info: any, type: any) => {
+  if (type === 1) {
+    console.log('二级评论')
+    emit('sendInfo', {
+      parent_comment_id: info.comment_id,
+      reply_nickname: info.nick_name,
+      father_length: info.child_length
+    })
+  } else {
+    console.log('三级评论')
+    emit('sendInfo', {
+      parent_comment_id: info.parent_comment_id,
+      reply_comment_id: info.comment_id,
+      reply_username: info.username,
+      reply_nickname: info.nick_name,
+      father_length: props?.commentInfo?.child_length
+    })
+  }
+}
+defineExpose({
+  changeChildShow
+})
+</script>
 <style lang="scss" scoped>
 .comment-part {
   //   background-color: palegoldenrod;

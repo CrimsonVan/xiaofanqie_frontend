@@ -1,9 +1,14 @@
 <template>
-  <van-nav-bar :fixed="true" @click-left="onClickLeft">
+  <van-nav-bar :fixed="true">
     <template #left>
-      <van-icon name="arrow-left" />
-      <img class="nav-avatar" :src="detailInfo.url" alt="" />
-      <span class="nav-name">小猫吃鱼</span>
+      <van-icon @click="onClickLeft" name="arrow-left" />
+      <img
+        @click="goOther(detailInfo?.username)"
+        class="nav-avatar"
+        :src="detailInfo?.avatar"
+        alt=""
+      />
+      <span class="nav-name">{{ detailInfo?.nick_name }}</span>
     </template>
     <template #right>
       <van-button class="nav-btn" plain color="#ff1e42">关注</van-button>
@@ -13,24 +18,29 @@
   <div class="safeBottom"></div>
   <van-swipe :autoplay="3000" indicator-color="#ff1e42">
     <van-swipe-item v-for="item in 4" :key="item">
-      <img style="width: 100%" :src="detailInfo.url"
+      <img style="width: 100%" :src="detailInfo?.content_img"
     /></van-swipe-item>
   </van-swipe>
   <div class="detail-main">
-    <h4>人在极端无语真的会被气笑</h4>
+    <h4>{{ detailInfo?.title }}</h4>
     <div class="detail-main-content">
-      我们的颜色选择器工具是一个强大的在线工具，允许您从任何图像中选择颜色。选择图像后，您可以使用放大镜放大并选择单个像素，以实时预览其颜色。
-      我们的工具使用户能够从图像...
+      {{ detailInfo?.content }}
     </div>
-    <div class="detail-main-data">10-26 广东</div>
+    <div class="detail-main-data">{{ detailInfo?.pub_time }} 广东</div>
   </div>
-  <div class="comment-num">共 307 条评论</div>
+  <div class="comment-num">共 {{ detailInfo?.comments_length }} 条评论</div>
   <div class="comment-main">
-    <commentPart />
-    <commentPart />
-    <commentPart />
-    <commentPart />
-    <commentPart />
+    <commentPart
+      :ref="
+        (e: any) => {
+          if (e) commentReplyRef.push(e)
+        }
+      "
+      v-for="(item, index) in commentFirstArr"
+      :key="item.comment_id"
+      :commentInfo="item"
+      @sendInfo="(val) => getChildMsg(val, index)"
+    />
   </div>
   <div class="bottom-input">
     <van-field
@@ -40,30 +50,96 @@
       autosize
       class="inp"
       type="textarea"
-      placeholder="说点什么..."
+      :placeholder="atContent"
     />
     <van-icon name="like-o" />
     <van-icon name="star-o" />
-    <van-icon name="chat-o" />
+    <van-icon @click="sendMsg" name="chat-o" />
   </div>
   <div class="safeBottom"></div>
 </template>
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import { getSinglePostService } from '@/api/post'
+import { getCommentService, addCommentService } from '@/api/comments'
 import { useRouter, useRoute } from 'vue-router'
 import commentPart from './components/commentPart.vue'
+import { useNumStore } from '@/stores'
+const useStore = useNumStore()
 const router = useRouter()
 const message = ref('')
 const route = useRoute()
-const detailInfo = ref<any>({
-  url: ''
+const detailInfo = ref<any>()
+const commentFirstArr = ref() //一级评论列表
+const atContent = ref('请输入消息')
+const commentReplyRef = ref<any>([])
+const curIndex = ref(0)
+let msgObj = ref({
+  avatar: useStore.userInfo.avatar,
+  content: '',
+  nick_name: useStore.userInfo.nick_name,
+  parent_comment_id: 0, //2级 3级
+  post_id: route.query.id,
+  reply_comment_id: 0, //3级
+  reply_nickname: '0', //3级
+  reply_username: '0', //3级
+  username: useStore.userInfo.username,
+  father_length: 0
 })
 const onClickLeft = () => {
   router.push('/home')
 }
-onMounted(() => {
-  console.log('测试query', route.query.picurl)
-  detailInfo.value.url = route.query.picurl
+const goOther = (username: string) => {
+  if (username === useStore.userInfo.username) {
+    router.push('/myself')
+  } else {
+    router.push(`/other?username=${username}`)
+  }
+}
+const getChildMsg = (val: any, index: any) => {
+  console.log('打印index', index)
+  curIndex.value = index
+  console.log('打印子传父亲', val)
+  atContent.value = `回复给${val.reply_nickname}:`
+  msgObj.value.parent_comment_id = val.parent_comment_id
+  msgObj.value.father_length = val.father_length
+  if (val.reply_comment_id) {
+    console.log('真的三级评论')
+    msgObj.value.reply_comment_id = val.reply_comment_id
+    msgObj.value.reply_nickname = val.reply_nickname
+    msgObj.value.reply_username = val.reply_username
+  }
+}
+const sendMsg = async () => {
+  // 判断输入能容是否为空
+  if (message.value === '') {
+    console.log('发送消息不能为空')
+    return
+  }
+  // console.log('打印发送信息', message.value)
+  msgObj.value.content = message.value
+  let res = await addCommentService(msgObj.value)
+  message.value = ''
+  if (res.data.message === '新增评论成功') {
+    console.log('新增评论成功')
+    if (atContent.value === '请输入消息') {
+      let res1 = await getCommentService({ id: route.query.id })
+      commentFirstArr.value = res1.data.data
+    } else {
+      console.log('父亲传入儿子')
+      commentReplyRef.value[curIndex.value]?.changeChildShow(
+        route.query.id,
+        msgObj.value.parent_comment_id
+      )
+    }
+  }
+}
+onMounted(async () => {
+  let res = await getSinglePostService({ id: route.query.id })
+  detailInfo.value = res.data.data
+  let res1 = await getCommentService({ id: route.query.id })
+  console.log('打印帖子下面的评论', res1.data.data)
+  commentFirstArr.value = res1.data.data
 })
 </script>
 <style lang="scss" scoped>

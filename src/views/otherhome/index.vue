@@ -1,15 +1,15 @@
 <template>
   <div class="nav-top">
-    <!-- <van-icon name="arrow-left" /> -->
-    <van-icon name="wap-nav" @click="() => (showLeft = true)" />
+    <!-- <van-icon name="wap-nav" /> -->
+    <van-icon @click="goback" name="arrow-left" />
     <van-icon name="ellipsis" />
   </div>
   <div class="myself-bg">
     <div class="myself-bg-top">
-      <img class="myself-top-avatar" :src="useStore.userInfo.avatar" alt="" />
+      <img class="myself-top-avatar" :src="otherInfo?.avatar" alt="" />
       <div class="myself-top-name">
-        <div>{{ useStore.userInfo.nick_name }}</div>
-        <div class="myself-top-username1">小红书号：xhs{{ useStore.userInfo.username }}</div>
+        <div>{{ otherInfo?.nick_name }}</div>
+        <div class="myself-top-username1">小红书号：xhs{{ otherInfo?.username }}</div>
         <div class="myself-top-username2">IP属地：北京</div>
       </div>
     </div>
@@ -27,8 +27,8 @@
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
-      <van-button round color="#6e6e6e" class="btn">编辑资料</van-button>
-      <van-button round icon="plus" type="primary" class="msg" />
+      <van-button round color="#ff1e42" class="btn">关注</van-button>
+      <van-button @click="goChat" round icon="chat-o" type="primary" class="msg" />
     </div>
     <div class="white-title">笔记</div>
   </div>
@@ -42,7 +42,7 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="godetail(item.url)" class="card">
+      <div class="card">
         <img class="card-img" :src="item.url" alt="" />
         <div class="card-text">
           <div class="card-text-top">峰哥安全抵达基辅，睡醒后开始给粉丝路祝福哈哈哈哈哈哈</div>
@@ -55,29 +55,18 @@
       </div>
     </template>
   </Waterfall>
-  <!-- 左侧弹出 -->
-  <van-popup v-model:show="showLeft" position="left" :style="{ width: '70%', height: '100%' }">
-    <!--  -->
-    <div class="left-main">
-      <van-button round color="#ff1e42" @click="logout" class="setting-btn">退出</van-button>
-    </div>
-  </van-popup>
 </template>
 <script lang="ts" setup>
 import { Waterfall } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { userGetInfoService } from '@/api/user'
+import { useRoute, useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
-import socket from '@/utils/connectSocket'
-const showLeft = ref(false)
-const router = useRouter()
 const useStore = useNumStore()
-const logout = () => {
-  socket.emit('logout', useStore.userInfo.username)
-  useStore.clearToken()
-  router.push('/login')
-}
+const route = useRoute()
+const router = useRouter()
+const otherInfo = ref()
 const waterfallList = ref([
   {
     id: 1,
@@ -162,11 +151,20 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
-const godetail = (url: string) => {
-  console.log('打印传参', url)
-
-  router.push(`/detail?picurl=${url}`)
+const goback = () => {
+  router.push('/home')
 }
+const goChat = () => {
+  let fromUsername = useStore.userInfo.username
+  let toUsername = otherInfo.value.username
+  router.push(
+    `/chat?fromUsername=${fromUsername}&toUsername=${toUsername}&friendName=${otherInfo.value.nick_name}&friendAvatar=${otherInfo.value.avatar}`
+  )
+}
+onMounted(async () => {
+  let res = await userGetInfoService({ username: route.query.username })
+  otherInfo.value = res.data.data
+})
 </script>
 <style lang="scss" scoped>
 .nav-top {
@@ -182,8 +180,8 @@ const godetail = (url: string) => {
   background-color: transparent;
   // background-color: salmon;
   color: #ffffff;
-  .van-icon-wap-nav {
-    margin-left: 8px;
+  .van-icon-arrow-left {
+    margin-left: 4px;
   }
   .van-icon-ellipsis {
     margin-right: 8px;

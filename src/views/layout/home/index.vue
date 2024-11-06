@@ -18,13 +18,13 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="godetail(item.url)" class="card">
-        <img class="card-img" :src="item.url" alt="" />
+      <div @click="godetail(item.id)" class="card">
+        <img class="card-img" :src="item.content_img" alt="" />
         <div class="card-text">
-          <div class="card-text-top">峰哥安全抵达基辅，睡醒后开始给粉丝路祝福哈哈哈哈哈哈</div>
+          <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
-            <img class="card-text-bottom-img" :src="item.url" alt="" />
-            <span class="card-text-bottom-name">峰哥小迷弟</span>
+            <img class="card-text-bottom-img" :src="item.avatar" alt="" />
+            <span class="card-text-bottom-name">{{ item.nick_name }}</span>
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
@@ -33,195 +33,68 @@
   </Waterfall>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import { Waterfall } from 'vue-waterfall-plugin-next'
 import { useRouter } from 'vue-router'
 import { throttle } from '@/utils/throttle'
+import { getPostService } from '@/api/post'
 const router = useRouter()
 const loading = ref(true)
+
 const waterfallList = ref([
   {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
+    avatar: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454458504.jpg',
+    comments_length: 99,
+    content:
+      '我们的颜色选择器工具是一个强大的在线工具，允许您从任何图像中选择颜色。选择图像后，您可以使用放大镜放大并选择单个像素，以实时预览其颜色。 我们的工具使用户能够从图像...',
+    content_img: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454493537.jpg',
+    id: 0,
+    nick_name: '小美',
+    pub_time: '10-29',
+    title: '人在极端无语真的会被气笑',
+    username: '13114209345'
   },
   {
-    id: 3,
-    text: '2',
-    left: 0,
-    top: 0,
-    height: 90,
-
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/E721CEB99185577D3256A73512D8DE12.jpg'
-  },
-  {
-    id: 4,
-    text: '3',
-    left: 0,
-    top: 0,
-    height: 170,
-
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/3454545372.jpg'
-  },
-  {
-    id: 5,
-    text: '4',
-    left: 0,
-    top: 0,
-    height: 180,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/3454666570.jpg'
-  },
-  {
-    id: 6,
-    text: '5',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/615DFB41613FC1BC3672D5933E28EEF4.jpg'
-  },
-  {
-    id: 7,
-    text: '6',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/CD55142D8F50F651E3C0D3B1D6C9006B.jpg'
-  },
-  {
-    id: 8,
-    text: '7',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/3454420933.jpg'
-  },
-  {
-    text: '8',
-    left: 0,
-    top: 0,
-    height: 150,
-
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/cloudstorage/895ea7ab-056a-4957-86e5-0da5637d0ae8.jpg'
-  },
-  {
-    text: '9',
-    left: 0,
-    top: 0,
-    height: 80,
-
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/yufan.jpg'
-  },
-  {
-    text: '10',
-    left: 0,
-    top: 0,
-    height: 100,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
+    avatar: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    comments_length: 99,
+    content:
+      '我们的颜色选择器工具是一个强大的在线工具，允许您从任何图像中选择颜色。选择图像后，您可以使用放大镜放大并选择单个像素，以实时预览其颜色。 我们的工具使用户能够从图像...',
+    content_img:
+      'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    id: 0,
+    nick_name: '小美',
+    pub_time: '10-29',
+    title: '人在极端无语真的会被气笑',
+    username: '13114209345'
   }
 ])
 const testList = ref([
   {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
+    avatar: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    comments_length: 99,
+    content:
+      '我们的颜色选择器工具是一个强大的在线工具，允许您从任何图像中选择颜色。选择图像后，您可以使用放大镜放大并选择单个像素，以实时预览其颜色。 我们的工具使用户能够从图像...',
+    content_img:
+      'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    id: 0,
+    nick_name: '小美',
+    pub_time: '10-29',
+    title: '人在极端无语真的会被气笑',
+    username: '13114209345'
   },
   {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
-  },
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
-  },
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/e69858186deb93429436ec0b194e3967_720.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e0d15f0f-d6bf-4f95-b183-b82aede04535.cdn.bspapp.com/s28447008.jpg'
+    avatar: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    comments_length: 99,
+    content:
+      '我们的颜色选择器工具是一个强大的在线工具，允许您从任何图像中选择颜色。选择图像后，您可以使用放大镜放大并选择单个像素，以实时预览其颜色。 我们的工具使用户能够从图像...',
+    content_img:
+      'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png',
+    id: 0,
+    nick_name: '小美',
+    pub_time: '10-29',
+    title: '人在极端无语真的会被气笑',
+    username: '13114209345'
   }
 ])
 const breakpoints = ref({
@@ -243,10 +116,8 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
-const godetail = (url: string) => {
-  console.log('打印传参', url)
-
-  router.push(`/detail?picurl=${url}`)
+const godetail = (id: string) => {
+  router.push(`/detail?id=${id}`)
 }
 // let arr = [1, 2, 3]
 // 触底函数
@@ -270,9 +141,12 @@ function onBottom() {
   if (clientHeight + scrollTop >= scrollHeight - 170) {
     // console.log('触底之前', waterfallList.value.length)
     waterfallList.value = [...waterfallList.value, ...testList.value]
-    console.log('触底之后', waterfallList.value.length)
   }
 }
+onMounted(async () => {
+  let res = await getPostService()
+  waterfallList.value = [...waterfallList.value, ...res.data.data]
+})
 </script>
 <style lang="scss" scoped>
 .safeTop {

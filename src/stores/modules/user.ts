@@ -1,15 +1,23 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { userGetInfoService } from '@/api/user'
+
 export const useNumStore = defineStore(
   'num',
   () => {
     //身份信息
     const userInfo = ref()
-    const getUserInfo = async (id: number) => {
-      const res = await axios.post('http://47.109.186.26:3008/users/getUserInfo', {
-        user_id: id
-      })
+    const token = ref()
+    const setToken = (t: string) => {
+      token.value = t
+    }
+    console.log('pinia')
+
+    const clearToken = () => {
+      token.value = null
+    }
+    const getUserInfo = async (username: string) => {
+      const res = await userGetInfoService({ username })
       userInfo.value = res.data.data
     }
     const clearUserInfo = () => {
@@ -25,6 +33,9 @@ export const useNumStore = defineStore(
     return {
       num,
       changeNum,
+      clearToken,
+      token,
+      setToken,
       userInfo,
       curTheme,
       isDark,

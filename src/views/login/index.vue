@@ -4,8 +4,9 @@
       <van-icon name="cross" />
       <p class="help">帮助</p>
     </div>
-    <div class="login-title"><h4>密码登录</h4></div>
-    <van-form @submit="onSubmit">
+    <!-- 登录表单 -->
+    <van-form v-if="isLogin" @submit="onSubmit">
+      <div class="login-title"><h4>密码登录</h4></div>
       <van-cell-group inset>
         <van-field
           v-model="username"
@@ -21,7 +22,7 @@
           :rules="[{ required: true, message: '请填写密码' }]"
         />
       </van-cell-group>
-      <div class="form-info"><span>去注册</span><span>忘记密码？</span></div>
+      <div class="form-info"><span @click="changeForm">← 返回</span><span>忘记密码？</span></div>
       <div>
         <van-button
           :disabled="isEmpty"
@@ -34,17 +35,72 @@
         >
       </div>
     </van-form>
+    <!-- 注册表单 -->
+    <van-form v-else @submit="onSubmit2">
+      <div class="login-title"><h4>用户注册</h4></div>
+      <van-cell-group inset>
+        <van-field
+          v-model="username"
+          name="用户名"
+          placeholder="手机号"
+          :rules="[{ validator, message: '请输入正确手机号格式' }]"
+        />
+        <van-field
+          v-model="password"
+          type="password"
+          name="密码"
+          placeholder="输入密码"
+          :rules="[{ required: true, message: '请填写密码' }]"
+        />
+      </van-cell-group>
+      <div class="form-info"><span @click="changeForm">← 返回</span><span>欢迎来小红书</span></div>
+      <div>
+        <van-button
+          :disabled="isEmpty"
+          class="login-btn"
+          round
+          block
+          color="#ff1e42"
+          native-type="submit"
+          >注册</van-button
+        >
+      </div>
+    </van-form>
   </div>
 </template>
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-const username = ref('')
-const password = ref('')
+import { userLoginService } from '@/api/user'
+import { useNumStore } from '@/stores'
+// import '../../utils/connectSocket'
+
+const useStore = useNumStore()
+const username = ref('13114209341')
+const password = ref('123456')
+const isLogin = ref(true)
 import { useRouter } from 'vue-router'
+const changeForm = () => {
+  isLogin.value = !isLogin.value
+}
 const router = useRouter()
-const onSubmit = (values: any) => {
+const onSubmit = async (values: any) => {
   console.log('submit', values)
-  router.push('/home')
+  let res = await userLoginService({
+    username: username.value,
+    password: password.value
+  })
+  console.log('打印登录接口返回结果', res)
+  useStore.setToken(res.data.token)
+  await useStore.getUserInfo(username.value)
+  if (res.data.code === 0) {
+    router.push('/home')
+    console.log('登陆成功并且跳转')
+  }
+}
+const onSubmit2 = () => {
+  isLogin.value = true
+  username.value = ''
+  password.value = ''
 }
 const isEmpty = computed(() => username.value === '' || password.value === '')
 const validator = (val: string) => /1\d{10}/.test(val)
@@ -82,7 +138,7 @@ const validator = (val: string) => /1\d{10}/.test(val)
   .form-info {
     margin: 10px auto;
     width: 80%;
-    font-size: 10px;
+    font-size: 11px;
     color: #388aef;
     display: flex;
     justify-content: space-between;
