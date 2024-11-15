@@ -2,6 +2,8 @@ import axios from 'axios'
 import router from '../router/index'
 import { useNumStore } from '@/stores'
 import { baseURL } from './config'
+import { showLoadingToast, closeToast } from 'vant'
+
 const instance = axios.create({
   // TODO 1. 基础地址，超时时间
   baseURL,
@@ -12,6 +14,11 @@ const instance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     // TODO 2. 携带token
+    showLoadingToast({
+      duration: 0, // 持续展示 toast
+      message: '加载中...',
+      forbidClick: true
+    })
     const useStore = useNumStore()
     if (useStore.token) {
       config.headers.Authorization = useStore.token
@@ -26,13 +33,16 @@ instance.interceptors.response.use(
   (res: any) => {
     // TODO 4. 摘取核心响应数据
     if (res.data.code === 0) {
+      closeToast()
       return res
     }
     // 错误的特殊情况 => 401 权限不足 或 token 过期 => 拦截到登录
 
     if (res.data.status === 401) {
       // ElMessage.error(res.data.message || '服务异常')
+      console.log('token错误')
 
+      closeToast()
       return router.push('/login')
     }
     // TODO 3. 处理业务失败

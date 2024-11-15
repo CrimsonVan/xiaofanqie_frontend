@@ -27,46 +27,77 @@
       </div>
     </div>
   </div>
-
-  <div class="bottom-input">
-    <van-icon name="volume-o" />
-    <van-field
-      v-model="message"
-      rows="1"
-      autosize
-      class="inp"
-      type="textarea"
-      placeholder="发消息..."
-    />
-    <van-icon @click="sendMsg" name="smile-o" />
-    <van-icon name="add-o" />
+  <div v-if="showEmoji" class="emoji-safeArea"></div>
+  <div class="fixed-bottom">
+    <div class="bottom-input">
+      <van-icon name="volume-o" />
+      <van-field
+        v-model="message"
+        rows="1"
+        autosize
+        class="inp"
+        type="textarea"
+        placeholder="发消息..."
+        @click-input="testFocus"
+        @keydown="search2($event)"
+      />
+      <van-icon @click="showEmo" name="smile-o" />
+      <van-icon @click="sendMsg" name="add-o" />
+    </div>
+    <div v-if="showEmoji" class="bottom-emoji">
+      <div class="bottom-emoji-line" v-for="(line, index) in emojiArr" :key="index">
+        <div class="emoji-item" @click="getEmoji(item)" v-for="(item, index) in line" :key="index">
+          {{ item }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import socket from '@/utils/connectSocket'
 import { useNumStore } from '@/stores'
 import { getChatMsg } from '@/api/msg'
-
+import type { msgData, msgDataAllRes } from '@/type/msg'
 const useStore = useNumStore()
 const router = useRouter()
 const route = useRoute()
-const msgArr = ref() //聊天信息列表
-const message = ref() //输入栏消息
-const friendName = ref() //左上角好友名字
-const friendAvatar = ref() //左上角好友头像
-const friendUsername = ref() //左上角好友的用户名
+const msgArr = ref<msgData[]>([]) //聊天信息列表
+const message = ref<string>('') //输入栏消息
+const friendName = ref<string>('') //左上角好友名字
+const friendAvatar = ref<string>('') //左上角好友头像
+const friendUsername = ref<string>('') //左上角好友的用户名
+const testFocus = () => {
+  console.log('focus了')
+  showEmoji.value = false
+  nextTick(() => {
+    reachBottom()
+  })
+}
+const emojiArr: Array<Array<string>> = [
+  ['😀', '🤡', '😂', '🤣', '😃', '😄', '😅', '😆'],
+  ['😉', '😊', '😋', '😎', '😍', '😘', '😗', '🙂'],
+  ['🤗', '🤔', '😐', '😑', '😶', '🙄', '😏', '😣'],
+  ['😥', '😮', '🤐', '😯', '😪', '😫', '😛', '😝'],
+  ['🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😨']
+]
+const search2 = (e: any) => {
+  if (e.key === 'Enter') {
+    console.log('Enter')
+  }
+}
+const showEmoji = ref<boolean>(false)
 const onClickLeft = () => {
-  router.push('/msg')
+  router.back()
 }
 const sendMsg = () => {
-  if (!message.value) {
+  if (message.value === '') {
     console.log('输入内容不能为空')
     return
   }
-  console.log('打印发送的信息', message.value)
-  let sendObj = {
+  // console.log('打印发送的信息', message.value)
+  let sendObj: msgData = {
     fromUsername: useStore.userInfo.username,
     fromNickname: useStore.userInfo.nick_name,
     fromAvatar: useStore.userInfo.avatar,
@@ -75,29 +106,55 @@ const sendMsg = () => {
     toNickname: friendName.value,
     toAvatar: friendAvatar.value
   }
+
   msgArr.value.push(sendObj)
+  nextTick(() => {
+    reachBottom()
+  })
   socket.emit('msg', sendObj)
-  message.value = null
+  message.value = ''
+}
+const getEmoji = (emo: string) => {
+  console.log('打印所选表情', emo)
+  message.value = message.value + emo
+}
+const showEmo = () => {
+  showEmoji.value = !showEmoji.value
+  nextTick(() => {
+    reachBottom()
+  })
 }
 // 接受对方发来的一对一消息
-socket.on('toOneMsg', (res) => {
-  console.log('打印对方发来的信息', res)
+socket.on('toOneMsg', (res: msgData) => {
   msgArr.value.push(res)
+  nextTick(() => {
+    reachBottom()
+  })
 })
+
 const goOther = () => {
   router.push(`/other?username=${friendUsername.value}`)
 }
+
+function reachBottom() {
+  let scrollHeight = document.documentElement.scrollHeight
+  document.documentElement.scrollTop = scrollHeight
+}
+
 onMounted(async () => {
   socket.emit('join', useStore.userInfo.username)
-  friendUsername.value = route.query.toUsername
-  friendName.value = route.query.friendName
-  friendAvatar.value = route.query.friendAvatar
+  friendUsername.value = route.query.toUsername as string
+  friendName.value = route.query.friendName as string
+  friendAvatar.value = route.query.friendAvatar as string
   // 获取历史聊天信息
-  let res = await getChatMsg({
-    fromUsername: route.query.fromUsername,
-    toUsername: route.query.toUsername
+  let res: msgDataAllRes = await getChatMsg({
+    fromUsername: route.query.fromUsername as string,
+    toUsername: route.query.toUsername as string
   })
-  msgArr.value = res.data.data
+  msgArr.value.push(...res.data.data)
+  nextTick(() => {
+    reachBottom()
+  })
 })
 </script>
 <style lang="scss" scoped>
@@ -136,6 +193,7 @@ onMounted(async () => {
   background-color: #f5f5f5;
   width: 100%;
   padding: 46px 12px;
+
   .chat-msg-item-left {
     width: 100%;
     min-height: 34px;
@@ -210,23 +268,45 @@ onMounted(async () => {
     }
   }
 }
-.bottom-input {
+
+.emoji-safeArea {
+  width: 100%;
+  height: 210px;
+}
+.fixed-bottom {
+  width: 100%;
   position: fixed;
   bottom: 0;
   background-color: #f5f5f5;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 8px 0;
-  .van-icon {
-    // color: #388aef;
-    font-size: 26px;
+  .bottom-input {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    padding: 8px 0;
+    .van-icon {
+      font-size: 26px;
+      margin-bottom: 3px;
+    }
+    .inp {
+      width: 73%;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
   }
-  .inp {
-    width: 73%;
-    padding: 4px;
-    border-radius: 4px;
+  .bottom-emoji {
+    width: 100%;
+    height: 210px;
+    background-color: #e8eaec;
+    font-size: 22px;
+    padding: 5px 10px;
+    .bottom-emoji-line {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 10px;
+    }
   }
 }
 </style>

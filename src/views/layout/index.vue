@@ -3,10 +3,11 @@
   <div class="safeBottom"></div>
   <van-tabbar route v-model="active">
     <van-tabbar-item to="/home" icon="home-o">首页</van-tabbar-item>
-    <van-tabbar-item icon="search">搜索</van-tabbar-item>
-    <van-tabbar-item name="search">
+    <van-tabbar-item to="/follow" icon="play-circle-o">动态</van-tabbar-item>
+
+    <van-tabbar-item to="/publish" name="search">
       <template #icon="">
-        <van-button class="plus" icon="plus" color="#ff1e42" />
+        <van-button class="plus" icon="plus" />
       </template>
     </van-tabbar-item>
     <van-tabbar-item to="/msg" icon="friends-o" badge="3">消息</van-tabbar-item>
@@ -18,6 +19,8 @@ import { ref } from 'vue'
 import { RouterView } from 'vue-router'
 import socket from '../../utils/connectSocket'
 import { useNumStore } from '@/stores'
+// import { useRoute } from 'vue-router'
+// const route = useRoute()
 const userStore = useNumStore()
 socket.emit('join', userStore.userInfo.username)
 const active = ref('home')
@@ -33,11 +36,15 @@ const active = ref('home')
   background-color: #ffffff;
   height: 50px;
 }
+
 .plus {
   width: 42px;
   height: 34px;
   padding: 0;
   font-size: 18px;
   border-radius: 8px;
+  color: #ffffff;
+  border-color: var(--theme-color);
+  background-color: var(--theme-color);
 }
 </style>

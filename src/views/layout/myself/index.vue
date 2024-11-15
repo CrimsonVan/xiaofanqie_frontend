@@ -1,11 +1,12 @@
 <template>
-  <div class="nav-top">
-    <!-- <van-icon name="arrow-left" /> -->
+  <div ref="navTopRef" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
     <van-icon name="wap-nav" @click="() => (showLeft = true)" />
+    <img v-show="isBrown" class="nav-top-avatar" :src="useStore.userInfo.avatar" alt="" />
     <van-icon name="ellipsis" />
   </div>
   <div class="myself-bg">
-    <div class="myself-bg-top">
+    <div class="myself-bg-safe" ref="myselfbgRef"></div>
+    <div class="myself-bg-top" ref="myselfbgtopRef">
       <img class="myself-top-avatar" :src="useStore.userInfo.avatar" alt="" />
       <div class="myself-top-name">
         <div>{{ useStore.userInfo.nick_name }}</div>
@@ -13,10 +14,10 @@
         <div class="myself-top-username2">IP属地：北京</div>
       </div>
     </div>
-    <div class="myself-bg-middle">肚子好饿~~~</div>
+    <div class="myself-bg-middle">{{ useStore.userInfo.signature }}</div>
     <div class="myself-bg-bottom">
-      <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">48</div>
+      <div class="myself-bottom-num-part" @click="goFollows">
+        <div class="myself-bottom-num">{{ useStore.followsLength }}</div>
         <div class="myself-bottom-title">关注</div>
       </div>
       <div class="myself-bottom-num-part">
@@ -27,122 +28,74 @@
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
-      <van-button round color="#6e6e6e" class="btn">编辑资料</van-button>
-      <van-button round icon="plus" type="primary" class="msg" />
+      <van-button @click="goProfile" round class="btn">编辑资料</van-button>
+      <van-button round icon="setting-o" type="primary" class="msg" />
     </div>
     <div class="white-title">笔记</div>
   </div>
   <Waterfall
     :delay="5"
     :posDuration="10"
-    :animationDelay="5"
+    :animationDelay="30"
     :animationDuration="5"
     :gutter="4"
-    :list="waterfallList"
+    :list="waterfallArr"
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="godetail(item.url)" class="card">
-        <img class="card-img" :src="item.url" alt="" />
+      <div @click="godetail(item.id)" class="card">
+        <!-- <img class="card-img" :src="item.content_img" alt="" /> -->
+        <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
         <div class="card-text">
-          <div class="card-text-top">峰哥安全抵达基辅，睡醒后开始给粉丝路祝福哈哈哈哈哈哈</div>
+          <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
-            <img class="card-text-bottom-img" :src="item.url" alt="" />
-            <span class="card-text-bottom-name">峰哥小迷弟</span>
+            <img class="card-text-bottom-img" :src="item.avatar" alt="" />
+            <span class="card-text-bottom-name">{{ item.nick_name }}</span>
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
       </div>
     </template>
   </Waterfall>
+
   <!-- 左侧弹出 -->
   <van-popup v-model:show="showLeft" position="left" :style="{ width: '70%', height: '100%' }">
     <!--  -->
     <div class="left-main">
-      <van-button round color="#ff1e42" @click="logout" class="setting-btn">退出</van-button>
+      <van-button round @click="logout" class="setting-btn">退出</van-button>
     </div>
   </van-popup>
 </template>
 <script lang="ts" setup>
-import { Waterfall } from 'vue-waterfall-plugin-next'
+import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getUserPostService } from '@/api/post'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import socket from '@/utils/connectSocket'
-const showLeft = ref(false)
+import { throttle } from '@/utils/throttle'
+
+const showLeft = ref<boolean>(false)
 const router = useRouter()
 const useStore = useNumStore()
+const waterfallArr = ref()
+const navTopRef = ref<any>()
+const navTopScrollHeight = ref()
+const myselfbgRef = ref<any>()
+const myselfbgtopRef = ref<any>()
+const isBrown = ref(false)
+const goProfile = () => {
+  router.push('/profile')
+}
 const logout = () => {
   socket.emit('logout', useStore.userInfo.username)
   useStore.clearToken()
-  router.push('/login')
+  showLeft.value = false
+  setTimeout(() => {
+    router.push('/login')
+  }, 300)
 }
-const waterfallList = ref([
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454650241.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png'
-  },
-  {
-    id: 3,
-    text: '2',
-    left: 0,
-    top: 0,
-    height: 90,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/阿也AHYEA-数字大赛3.png'
-  },
-  {
-    id: 4,
-    text: '3',
-    left: 0,
-    top: 0,
-    height: 170,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454458504.jpg'
-  },
-  {
-    id: 5,
-    text: '4',
-    left: 0,
-    top: 0,
-    height: 180,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454493537.jpg'
-  },
-
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454650241.jpg'
-  },
-
-  {
-    id: 3,
-    text: '2',
-    left: 0,
-    top: 0,
-    height: 90,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/阿也AHYEA-数字大赛3.png'
-  }
-])
 const breakpoints = ref({
   3000: {
     //当屏幕宽度小于等于3000
@@ -162,12 +115,35 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
-const godetail = (url: string) => {
-  console.log('打印传参', url)
-
-  router.push(`/detail?picurl=${url}`)
+const goFollows = () => {
+  router.push('/follows')
 }
+const godetail = (id: string) => {
+  router.push(`/detail?id=${id}`)
+}
+// 触底函数
+async function onBottom() {
+  // 获取滚动高度
+  let scrollTop = document.documentElement.scrollTop
+
+  if (scrollTop > navTopScrollHeight.value) {
+    isBrown.value = true
+  } else {
+    isBrown.value = false
+  }
+}
+let throttledScroll = throttle(onBottom, 300)
+document.addEventListener('scroll', throttledScroll)
+onMounted(async () => {
+  let res = await getUserPostService({ username: useStore.userInfo.username })
+  console.log('打印个人帖子', res.data.data)
+  waterfallArr.value = res.data.data
+
+  navTopScrollHeight.value = myselfbgRef.value.clientHeight + myselfbgtopRef.value.clientHeight
+  console.log('打印topNav高度', navTopScrollHeight.value)
+})
 </script>
+
 <style lang="scss" scoped>
 .nav-top {
   display: flex;
@@ -180,6 +156,7 @@ const godetail = (url: string) => {
   font-size: 20px;
   padding: 8px 0;
   background-color: transparent;
+  // background-color: pink;
   // background-color: salmon;
   color: #ffffff;
   .van-icon-wap-nav {
@@ -193,13 +170,45 @@ const godetail = (url: string) => {
     height: 24px;
     overflow: hidden;
     border-radius: 50%;
+    // background-color: #fff;
   }
 }
+
+.nav-top-brown {
+  display: flex;
+  position: fixed;
+  z-index: 990;
+  top: 0;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 20px;
+  padding: 8px 0;
+  background-color: #6f6161;
+  color: #ffffff;
+  .van-icon-wap-nav {
+    margin-left: 8px;
+  }
+  .van-icon-ellipsis {
+    margin-right: 8px;
+  }
+  .nav-top-avatar {
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: #ffffff;
+  }
+}
+
 .myself-bg {
-  padding: 50px 0px 0px;
-  // width: 100%;
+  padding: 40px 0px 0px;
   min-height: 210px;
   background-color: #6f6161;
+  .myself-bg-safe {
+    width: 100%;
+    height: 10px;
+  }
   .myself-bg-top {
     // width: 100%;
     margin: 0 10px;
@@ -265,12 +274,21 @@ const godetail = (url: string) => {
       }
     }
     .btn {
-      height: 25px;
+      height: 27px;
+      width: 86px;
+      // padding: 0;
       margin-left: auto;
+      color: #ffffff;
+      border: 1px solid #ffffff;
+      background-color: transparent;
+      font-size: 12px;
     }
     .msg {
-      height: 25px;
-      margin-left: 8px;
+      height: 27px;
+      width: 38px;
+      // padding: 0;
+      margin-left: 10px;
+      color: #ffffff;
       border: 1px solid #ffffff;
       background-color: transparent;
     }
@@ -287,7 +305,7 @@ const godetail = (url: string) => {
   }
 }
 .waterfall-list[data-v-1c4c57b0] {
-  background-color: #f5f5f5;
+  // background-color: #f5f5f5;
   .card {
     background-color: #ffffff;
     border-radius: 8px;
@@ -336,6 +354,7 @@ const godetail = (url: string) => {
     }
   }
 }
+
 .van-popup {
   background-color: #f5f5f5;
 
@@ -351,6 +370,9 @@ const godetail = (url: string) => {
       width: 220px;
       margin-top: auto;
       margin-bottom: 14px;
+      color: #ffffff;
+      border-color: var(--theme-color);
+      background-color: var(--theme-color);
     }
   }
 }

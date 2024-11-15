@@ -1,4 +1,22 @@
 import request from '../utils/request'
-// 登录接口
-export const getPostService = () => request.get('/post/get')
-export const getSinglePostService = ({ id }: any) => request.post('/post/getOne', { id })
+import type { postAllDataRes, postQuery, postOneDataRes } from '@/type/post'
+// 帖子接口
+//获取所有帖子
+export const getPostService = ({ pagenum }: postQuery) =>
+  request.post<any, postAllDataRes>('/post/get', { pagenum })
+//获取关注的所有帖子
+export const getFollowPostService = ({ username, pagenum }: any) =>
+  request.post<any, postAllDataRes>('/post/getFollow', { username, pagenum })
+//获取单个帖子
+export const getSinglePostService = ({ id }: postQuery) =>
+  request.post<postOneDataRes, any>('/post/getOne', { id })
+//添加帖子
+export const addPostService = (formdata: any) => request.post<any, any>('/post/add', formdata)
+//获取某用户所有帖子
+export const getUserPostService = ({ username }: postQuery) =>
+  request.post<any, postAllDataRes>('/post/getUser', { username })
+//搜索帖子
+export const getSearchPostService = ({ query }: postQuery) =>
+  request.post<any, postAllDataRes>('/post/getSearch', { query })
+//删除帖子
+export const delPostService = ({ id }: postQuery) => request.post<any, any>('/post/del', { id })

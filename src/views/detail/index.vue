@@ -1,9 +1,9 @@
 <template>
   <van-nav-bar :fixed="true">
     <template #left>
-      <van-icon @click="onClickLeft" name="arrow-left" />
+      <van-icon @click="() => router.back()" name="arrow-left" />
       <img
-        @click="goOther(detailInfo?.username)"
+        @click="goOther(detailInfo?.username!)"
         class="nav-avatar"
         :src="detailInfo?.avatar"
         alt=""
@@ -11,16 +11,23 @@
       <span class="nav-name">{{ detailInfo?.nick_name }}</span>
     </template>
     <template #right>
-      <van-button class="nav-btn" plain color="#ff1e42">关注</van-button>
-      <van-icon name="share-o" />
+      <followButton :detailInfo="detailInfo"></followButton>
+      <van-icon v-if="useStore.userInfo.username !== detailInfo?.username" name="share-o" />
+      <van-icon v-else @click="() => (showBottom = true)" name="ellipsis" />
     </template>
   </van-nav-bar>
   <div class="safeBottom"></div>
-  <van-swipe :autoplay="3000" indicator-color="#ff1e42">
-    <van-swipe-item v-for="item in 4" :key="item">
-      <img style="width: 100%" :src="detailInfo?.content_img"
-    /></van-swipe-item>
+
+  <van-swipe :height="swipeHeight">
+    <van-swipe-item v-for="(item, index) in detailInfo?.content_img.split(',')" :key="index">
+      <!-- <img class="img" :src="detailInfo?.content_img" /> -->
+      <van-image width="100%" :height="swipeHeight" fit="contain" :src="item" />
+    </van-swipe-item>
+    <template #indicator="{ active, total }">
+      <div class="custom-indicator">{{ active + 1 }}/{{ total }}</div>
+    </template>
   </van-swipe>
+
   <div class="detail-main">
     <h4>{{ detailInfo?.title }}</h4>
     <div class="detail-main-content">
@@ -28,7 +35,7 @@
     </div>
     <div class="detail-main-data">{{ detailInfo?.pub_time }} 广东</div>
   </div>
-  <div class="comment-num">共 {{ detailInfo?.comments_length }} 条评论</div>
+  <div class="comment-num">共 {{ detailInfo?.comment_count }} 条评论</div>
   <div class="comment-main">
     <commentPart
       :ref="
@@ -39,8 +46,8 @@
       v-for="(item, index) in commentFirstArr"
       :key="item.comment_id"
       :commentInfo="item"
-      @sendInfo="(val) => getChildMsg(val, index)"
-    />
+      @sendInfo="(val: commentsSonToFather) => getChildMsg(val, index)"
+    ></commentPart>
   </div>
   <div class="bottom-input">
     <van-field
@@ -57,38 +64,75 @@
     <van-icon @click="sendMsg" name="chat-o" />
   </div>
   <div class="safeBottom"></div>
+  <!-- 底侧弹出 -->
+  <van-popup v-model:show="showBottom" position="bottom" :style="{ width: '100%', height: '14%' }">
+    <div class="bottom-pop">
+      <div class="bottom-pop-item">
+        <div class="circle"><van-icon name="share-o" /></div>
+        <div class="bottom-pop-text">分享</div>
+      </div>
+      <div class="bottom-pop-item">
+        <div class="circle"><van-icon name="miniprogram-o" /></div>
+        <div class="bottom-pop-text">生成图片</div>
+      </div>
+      <div class="bottom-pop-item">
+        <div class="circle"><van-icon name="flower-o" /></div>
+        <div class="bottom-pop-text">推广</div>
+      </div>
+      <div class="bottom-pop-item">
+        <div class="circle"><van-icon name="edit" /></div>
+        <div class="bottom-pop-text">编辑</div>
+      </div>
+      <div class="bottom-pop-item" @click="delPost">
+        <div class="circle"><van-icon name="delete-o" /></div>
+        <div class="bottom-pop-text">删除</div>
+      </div>
+    </div>
+  </van-popup>
 </template>
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { getSinglePostService } from '@/api/post'
+import { getSinglePostService, delPostService } from '@/api/post'
 import { getCommentService, addCommentService } from '@/api/comments'
 import { useRouter, useRoute } from 'vue-router'
 import commentPart from './components/commentPart.vue'
 import { useNumStore } from '@/stores'
+import followButton from '@/components/followButton.vue'
+import type { commentData, commentsSonToFather, commentDataAllRes } from '@/type/comments'
+import type { postOneDataRes, postData } from '@/type/post'
+import { showConfirmDialog } from 'vant'
 const useStore = useNumStore()
 const router = useRouter()
 const message = ref('')
 const route = useRoute()
-const detailInfo = ref<any>()
-const commentFirstArr = ref() //一级评论列表
-const atContent = ref('请输入消息')
+const detailInfo = ref<postData>()
+const commentFirstArr = ref<commentData[]>([]) //一级评论列表
+const atContent = ref<string>('请输入消息')
 const commentReplyRef = ref<any>([])
-const curIndex = ref(0)
+// const swipeImgRef = ref<any>([])
+const swipeHeight = ref<any>()
+const curIndex = ref<number>(0)
+const showBottom = ref<boolean>(false)
+// const testImg = ref([
+//   '	http://47.109.186.26:3007/uploads/dd1bda1296b4a869309c197f88c2e099',
+//   '	http://47.109.186.26:3007/uploads/b7f40f6fb462b88bfebc5db24cd47197',
+
+//   '	http://47.109.186.26:3007/uploads/ff5707de6a546fef707dcdd9abfebdab',
+//   'http://47.109.186.26:3007/uploads/c26e947c1f7013f922662291a408b692'
+// ])
 let msgObj = ref({
   avatar: useStore.userInfo.avatar,
   content: '',
   nick_name: useStore.userInfo.nick_name,
   parent_comment_id: 0, //2级 3级
-  post_id: route.query.id,
+  post_id: route.query.id as string,
   reply_comment_id: 0, //3级
   reply_nickname: '0', //3级
   reply_username: '0', //3级
   username: useStore.userInfo.username,
   father_length: 0
 })
-const onClickLeft = () => {
-  router.push('/home')
-}
+
 const goOther = (username: string) => {
   if (username === useStore.userInfo.username) {
     router.push('/myself')
@@ -96,18 +140,18 @@ const goOther = (username: string) => {
     router.push(`/other?username=${username}`)
   }
 }
-const getChildMsg = (val: any, index: any) => {
+const getChildMsg = (val: commentsSonToFather, index: number) => {
   console.log('打印index', index)
   curIndex.value = index
   console.log('打印子传父亲', val)
-  atContent.value = `回复给${val.reply_nickname}:`
+  atContent.value = `回复 @${val.reply_nickname}:`
   msgObj.value.parent_comment_id = val.parent_comment_id
   msgObj.value.father_length = val.father_length
   if (val.reply_comment_id) {
     console.log('真的三级评论')
     msgObj.value.reply_comment_id = val.reply_comment_id
     msgObj.value.reply_nickname = val.reply_nickname
-    msgObj.value.reply_username = val.reply_username
+    msgObj.value.reply_username = val.reply_username as string
   }
 }
 const sendMsg = async () => {
@@ -118,12 +162,12 @@ const sendMsg = async () => {
   }
   // console.log('打印发送信息', message.value)
   msgObj.value.content = message.value
-  let res = await addCommentService(msgObj.value)
+  let res: any = await addCommentService(msgObj.value)
   message.value = ''
   if (res.data.message === '新增评论成功') {
     console.log('新增评论成功')
     if (atContent.value === '请输入消息') {
-      let res1 = await getCommentService({ id: route.query.id })
+      let res1 = await getCommentService({ id: route.query.id as string })
       commentFirstArr.value = res1.data.data
     } else {
       console.log('父亲传入儿子')
@@ -134,12 +178,37 @@ const sendMsg = async () => {
     }
   }
 }
+const delPost = () => {
+  showConfirmDialog({
+    message: '确定要删除这个帖子吗？'
+  })
+    .then(async () => {
+      // on confirm
+      let res = await delPostService({ id: route.query.id as string })
+      if (res.data.message === '删除帖子成功') {
+        router.back()
+      }
+    })
+    .catch(() => {
+      // on cancel
+    })
+}
+
 onMounted(async () => {
-  let res = await getSinglePostService({ id: route.query.id })
+  console.log('打印route', typeof route.query.id)
+  let res: postOneDataRes = await getSinglePostService({ id: route.query.id as string })
   detailInfo.value = res.data.data
-  let res1 = await getCommentService({ id: route.query.id })
+  console.log('打印res.data.data', res.data.data)
+  let res1: commentDataAllRes = await getCommentService({ id: route.query.id as string })
   console.log('打印帖子下面的评论', res1.data.data)
   commentFirstArr.value = res1.data.data
+  console.log('dom', document.querySelector('.van-image__img')?.clientHeight)
+  let firstImgHeight: any = document.querySelector('.van-image__img')?.clientHeight
+  if (firstImgHeight < 550) {
+    swipeHeight.value = document.querySelector('.van-image__img')?.clientHeight
+  } else {
+    swipeHeight.value = 500
+  }
 })
 </script>
 <style lang="scss" scoped>
@@ -163,7 +232,7 @@ onMounted(async () => {
   height: 28px;
   border-radius: 50%;
   overflow: hidden;
-  margin-left: 2px;
+  margin-left: 6px;
 }
 .nav-name {
   margin-left: 5px;
@@ -172,21 +241,50 @@ onMounted(async () => {
 }
 .nav-btn {
   border-radius: 12px;
-  height: 23px;
-  width: 52px;
+  height: 24px;
+  min-width: 52px;
   margin-right: 8px;
   font-size: 12px;
-  padding: 0;
+  padding: 3px;
+  color: #ff1e42;
+  border-color: #ff1e42;
+}
+.nav-btn-followed {
+  border-radius: 12px;
+  height: 24px;
+  min-width: 52px;
+  margin-right: 8px;
+  font-size: 12px;
+  padding: 3px;
+  color: #333333;
+  border-color: #ccc;
 }
 .van-swipe {
   width: 100%;
-  overflow: hidden;
+  // height: 100%;
+  // height: 390px;
   .van-swipe-item {
-    height: 100%;
     width: 100%;
+
+    img {
+      width: 100%;
+      // // width: auto;
+      // height: 100%;
+      // object-fit: contain;
+    }
   }
-  .van-swipe__indicator {
-    background-color: #8a8a8a;
+  .custom-indicator {
+    position: absolute;
+    right: 10px;
+    top: 3px;
+    padding: 2px 6px;
+    font-size: 15px;
+    border-radius: 9px;
+    color: #f5f5f5;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  ::v-deep(.van-swipe__indicator--active) {
+    background-color: var(--theme-color);
   }
 }
 .van-safe-area-bottom {
@@ -195,7 +293,7 @@ onMounted(async () => {
 .detail-main {
   padding: 10px 0px 15px;
   margin: 0px 10px;
-  min-height: 16vh;
+  min-height: 2vh;
   font-size: 16px;
   border-bottom: 1px solid #ccc;
   h4 {
@@ -243,6 +341,45 @@ onMounted(async () => {
     border-radius: 14px;
     background-color: skyblue;
     background-color: #f5f5f5;
+  }
+}
+.van-popup--bottom {
+  border-radius: 12px 12px 0 0;
+
+  .bottom-pop {
+    width: 100%;
+    height: 100%;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: space-around;
+    .bottom-pop-item {
+      height: 100%;
+      width: 50px;
+      // background-color: palegoldenrod;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      .circle {
+        width: 48px;
+        height: 48px;
+        overflow: hidden;
+        border-radius: 50%;
+        background-color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .van-icon {
+          color: #8a8a8a;
+          font-size: 27px;
+        }
+      }
+      .bottom-pop-text {
+        font-size: 12px;
+        margin-top: 3px;
+        color: #333333;
+      }
+    }
   }
 }
 </style>

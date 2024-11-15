@@ -1,13 +1,18 @@
 <template>
   <div class="comment-part">
-    <img class="comment-avatar" :src="commentInfo?.avatar" alt="" />
+    <img
+      @click="goOther(commentInfo?.username as string)"
+      class="comment-avatar"
+      :src="commentInfo?.avatar"
+      alt=""
+    />
     <div class="comment-content">
       <div class="comment-content-top">{{ commentInfo?.nick_name }}</div>
       <div class="comment-content-middle">
         {{ commentInfo?.content }}
       </div>
       <div class="comment-content-data">
-        昨天 07:06 云南 <span @click="sendFather(commentInfo, 1)">回复</span>
+        昨天 07:06 云南 <span @click="sendFather(commentInfo as commentData, 1)">回复</span>
       </div>
     </div>
     <div class="comment-like">
@@ -17,15 +22,15 @@
   </div>
   <!-- 子评论显示区域 -->
   <div
-    v-if="!isShowChild && commentInfo?.child_length > 0"
-    @click="changeChildShow(commentInfo?.post_id, commentInfo?.comment_id)"
+    v-if="!isShowChild && (commentInfo?.child_length as number) > 0"
+    @click="changeChildShow(commentInfo?.post_id as number, commentInfo?.comment_id as number)"
     class="reply-num"
   >
     <span style="color: #ccc">一</span> 展开{{ commentInfo?.child_length }}条回复
   </div>
   <div v-else class="reply">
     <div v-for="item in childArr" :key="item.comment_id" class="reply-part">
-      <img class="reply-avatar" :src="item?.avatar" alt="" />
+      <img class="reply-avatar" @click="goOther(item?.username)" :src="item?.avatar" alt="" />
       <div class="reply-content">
         <div class="reply-content-top">{{ item?.nick_name }}</div>
         <div class="reply-content-middle">
@@ -45,32 +50,52 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, defineExpose } from 'vue'
+import { ref } from 'vue'
+import type { PropType } from 'vue'
 import { getSecondCommentService } from '@/api/comments'
-const isShowChild = ref(false) //是否显示子评论
-const childArr = ref() //子评论
+import type { commentData, commentDataAllRes, commentsSonToFather } from '@/type/comments'
+import { useRouter } from 'vue-router'
+import { useNumStore } from '@/stores'
+const useStore = useNumStore()
+const router = useRouter()
+const isShowChild = ref<boolean>(false) //是否显示子评论
+const childArr = ref<commentData[]>([]) //子评论
+
 let props = defineProps({
   commentInfo: {
-    type: Object
+    type: Object as PropType<commentData>
   }
 })
-const changeChildShow = async (post_id: any, parent_comment_id: any) => {
+
+const goOther = (username: string) => {
+  if (username === useStore.userInfo.username) {
+    router.push('/myself')
+  } else {
+    router.push(`/other?username=${username}`)
+  }
+}
+const changeChildShow = async (post_id: number, parent_comment_id: number) => {
   isShowChild.value = true
-  let childRes = await getSecondCommentService({
+  let childRes: commentDataAllRes = await getSecondCommentService({
     post_id: post_id,
     parent_comment_id: parent_comment_id
   })
   childArr.value = childRes.data.data
   console.log('打印子评论', childArr.value)
 }
-const emit = defineEmits(['sendInfo'])
-const sendFather = (info: any, type: any) => {
+
+const emit = defineEmits<{
+  // eslint-disable-next-line no-unused-vars
+  (e: 'sendInfo', data: commentsSonToFather): void
+}>()
+
+const sendFather = (info: commentData, type: number) => {
   if (type === 1) {
     console.log('二级评论')
     emit('sendInfo', {
-      parent_comment_id: info.comment_id,
-      reply_nickname: info.nick_name,
-      father_length: info.child_length
+      parent_comment_id: info?.comment_id as number,
+      reply_nickname: info?.nick_name,
+      father_length: info?.child_length as number
     })
   } else {
     console.log('三级评论')
@@ -79,7 +104,7 @@ const sendFather = (info: any, type: any) => {
       reply_comment_id: info.comment_id,
       reply_username: info.username,
       reply_nickname: info.nick_name,
-      father_length: props?.commentInfo?.child_length
+      father_length: props?.commentInfo?.child_length as number
     })
   }
 }

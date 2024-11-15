@@ -1,7 +1,12 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { userGetInfoService } from '@/api/user'
-
+import {
+  userGetInfoService,
+  userGetFollowService,
+  userAddFollowService,
+  userDelFollowService
+} from '@/api/user'
+import type { followResponseData, userInfoDataAllRes } from '@/type/user'
 export const useNumStore = defineStore(
   'num',
   () => {
@@ -17,7 +22,7 @@ export const useNumStore = defineStore(
       token.value = null
     }
     const getUserInfo = async (username: string) => {
-      const res = await userGetInfoService({ username })
+      const res: userInfoDataAllRes = await userGetInfoService({ username })
       userInfo.value = res.data.data
     }
     const clearUserInfo = () => {
@@ -30,6 +35,37 @@ export const useNumStore = defineStore(
     const changeNum = () => {
       num.value++
     }
+    //搜索历史
+    const history = ref<string[]>([])
+    const setHistory = (arr: string) => {
+      history.value = [...new Set([arr, ...history.value])].slice(0, 14)
+    }
+    const clearHistory = () => {
+      history.value = []
+    }
+    //关注列表
+    const follows = ref<any>([])
+    const followsLength = computed(() => follows.value.length)
+    const getFollows = async () => {
+      const res: followResponseData = await userGetFollowService({
+        username: userInfo.value!.username
+      })
+      follows.value = res.data.data
+      console.log('获取关注列表', res.data.data)
+    }
+    const addFollows = async (obj: any) => {
+      const res: any = await userAddFollowService(obj)
+      console.log('打印add关注后的res', res)
+      await getFollows()
+    }
+    const delFollows = async ({ username, followUsername }: any) => {
+      const res: any = await userDelFollowService({
+        username: username,
+        followUsername: followUsername
+      })
+      console.log('打印del关注后的res', res)
+      await getFollows()
+    }
     return {
       num,
       changeNum,
@@ -40,7 +76,15 @@ export const useNumStore = defineStore(
       curTheme,
       isDark,
       getUserInfo,
-      clearUserInfo
+      clearUserInfo,
+      history,
+      setHistory,
+      clearHistory,
+      follows,
+      followsLength,
+      getFollows,
+      addFollows,
+      delFollows
     }
   },
   {

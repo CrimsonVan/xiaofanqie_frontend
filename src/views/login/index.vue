@@ -1,11 +1,11 @@
 <template>
   <div class="login">
     <div class="login-top">
-      <van-icon name="cross" />
+      <van-icon @click="() => router.back()" name="cross" />
       <p class="help">帮助</p>
     </div>
     <!-- 登录表单 -->
-    <van-form v-if="isLogin" @submit="onSubmit">
+    <van-form style="padding: 0" v-if="isLogin" @submit="onSubmit">
       <div class="login-title"><h4>密码登录</h4></div>
       <van-cell-group inset>
         <van-field
@@ -24,13 +24,7 @@
       </van-cell-group>
       <div class="form-info"><span @click="changeForm">← 返回</span><span>忘记密码？</span></div>
       <div>
-        <van-button
-          :disabled="isEmpty"
-          class="login-btn"
-          round
-          block
-          color="#ff1e42"
-          native-type="submit"
+        <van-button :disabled="isEmpty" class="login-btn" round block native-type="submit"
           >登录</van-button
         >
       </div>
@@ -55,13 +49,7 @@
       </van-cell-group>
       <div class="form-info"><span @click="changeForm">← 返回</span><span>欢迎来小红书</span></div>
       <div>
-        <van-button
-          :disabled="isEmpty"
-          class="login-btn"
-          round
-          block
-          color="#ff1e42"
-          native-type="submit"
+        <van-button :disabled="isEmpty" class="login-btn" round block native-type="submit"
           >注册</van-button
         >
       </div>
@@ -70,10 +58,9 @@
 </template>
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-import { userLoginService } from '@/api/user'
+import { userLoginService, userRegisterService } from '@/api/user'
 import { useNumStore } from '@/stores'
-// import '../../utils/connectSocket'
-
+import { showFailToast, showSuccessToast } from 'vant'
 const useStore = useNumStore()
 const username = ref('13114209341')
 const password = ref('123456')
@@ -83,8 +70,7 @@ const changeForm = () => {
   isLogin.value = !isLogin.value
 }
 const router = useRouter()
-const onSubmit = async (values: any) => {
-  console.log('submit', values)
+const onSubmit = async () => {
   let res = await userLoginService({
     username: username.value,
     password: password.value
@@ -92,22 +78,33 @@ const onSubmit = async (values: any) => {
   console.log('打印登录接口返回结果', res)
   useStore.setToken(res.data.token)
   await useStore.getUserInfo(username.value)
+  await useStore.getFollows()
   if (res.data.code === 0) {
     router.push('/home')
     console.log('登陆成功并且跳转')
+  } else {
+    console.log('登陆失败')
   }
 }
-const onSubmit2 = () => {
-  isLogin.value = true
-  username.value = ''
-  password.value = ''
+const onSubmit2 = async () => {
+  let res = await userRegisterService({ username: username.value, password: password.value })
+  console.log('打印注册的res', res.data.data)
+  if (res.data.message === '用户名已被占用') {
+    console.log('用户名已被占用')
+    showFailToast('用户名已被占用')
+  } else {
+    showSuccessToast('注册成功')
+    // console.log()
+    changeForm()
+  }
 }
 const isEmpty = computed(() => username.value === '' || password.value === '')
-const validator = (val: string) => /1\d{10}/.test(val)
+const validator = (val: string) => /^1\d{10}$/.test(val)
 </script>
 <style lang="scss" scoped>
 .login {
   padding: 20px 20px;
+
   .login-top {
     // background-color: salmon;
     font-size: 18px;
@@ -134,6 +131,9 @@ const validator = (val: string) => /1\d{10}/.test(val)
     height: 38px;
     width: 280px;
     margin: 15px auto;
+    color: #ffffff;
+    border-color: var(--theme-color);
+    background-color: var(--theme-color);
   }
   .form-info {
     margin: 10px auto;

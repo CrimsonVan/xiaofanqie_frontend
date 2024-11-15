@@ -27,7 +27,10 @@
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
-      <van-button round color="#ff1e42" class="btn">关注</van-button>
+      <followButton
+        :isOther="true"
+        :detailInfo="{ type: 'otherInfo', ...otherInfo }"
+      ></followButton>
       <van-button @click="goChat" round icon="chat-o" type="primary" class="msg" />
     </div>
     <div class="white-title">笔记</div>
@@ -35,20 +38,22 @@
   <Waterfall
     :delay="5"
     :posDuration="10"
-    :animationDelay="5"
+    :animationDelay="30"
     :animationDuration="5"
     :gutter="4"
     :list="waterfallList"
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div class="card">
-        <img class="card-img" :src="item.url" alt="" />
+      <div @click="godetail(item.id)" class="card">
+        <!-- <img class="card-img" :src="item.content_img" alt="" /> -->
+        <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
+
         <div class="card-text">
-          <div class="card-text-top">峰哥安全抵达基辅，睡醒后开始给粉丝路祝福哈哈哈哈哈哈</div>
+          <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
-            <img class="card-text-bottom-img" :src="item.url" alt="" />
-            <span class="card-text-bottom-name">峰哥小迷弟</span>
+            <img class="card-text-bottom-img" :src="item.avatar" alt="" />
+            <span class="card-text-bottom-name">{{ item.nick_name }}</span>
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
@@ -57,81 +62,19 @@
   </Waterfall>
 </template>
 <script lang="ts" setup>
-import { Waterfall } from 'vue-waterfall-plugin-next'
+import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import { ref, onMounted } from 'vue'
 import { userGetInfoService } from '@/api/user'
 import { useRoute, useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
+import { getUserPostService } from '@/api/post'
+import followButton from '@/components/followButton.vue'
 const useStore = useNumStore()
 const route = useRoute()
 const router = useRouter()
 const otherInfo = ref()
-const waterfallList = ref([
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454650241.jpg'
-  },
-
-  {
-    id: 2,
-
-    text: '1',
-    left: 0,
-    top: 0,
-    height: 90,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/害羞超人.png'
-  },
-  {
-    id: 3,
-    text: '2',
-    left: 0,
-    top: 0,
-    height: 90,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/阿也AHYEA-数字大赛3.png'
-  },
-  {
-    id: 4,
-    text: '3',
-    left: 0,
-    top: 0,
-    height: 170,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454458504.jpg'
-  },
-  {
-    id: 5,
-    text: '4',
-    left: 0,
-    top: 0,
-    height: 180,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454493537.jpg'
-  },
-
-  {
-    id: 1,
-    text: '0',
-    left: 0,
-    top: 0,
-    height: 150,
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/3454650241.jpg'
-  },
-
-  {
-    id: 3,
-    text: '2',
-    left: 0,
-    top: 0,
-    height: 90,
-
-    url: 'https://mp-e8bb14f6-55c1-481a-9c68-bae5900cd604.cdn.bspapp.com/avatar/阿也AHYEA-数字大赛3.png'
-  }
-])
+const waterfallList = ref()
 const breakpoints = ref({
   3000: {
     //当屏幕宽度小于等于3000
@@ -152,7 +95,7 @@ const breakpoints = ref({
   }
 })
 const goback = () => {
-  router.push('/home')
+  router.back()
 }
 const goChat = () => {
   let fromUsername = useStore.userInfo.username
@@ -161,9 +104,15 @@ const goChat = () => {
     `/chat?fromUsername=${fromUsername}&toUsername=${toUsername}&friendName=${otherInfo.value.nick_name}&friendAvatar=${otherInfo.value.avatar}`
   )
 }
+const godetail = (id: number) => {
+  router.push(`/detail?id=${id}`)
+}
 onMounted(async () => {
-  let res = await userGetInfoService({ username: route.query.username })
+  let res = await userGetInfoService({ username: route.query.username as string })
   otherInfo.value = res.data.data
+  let res1 = await getUserPostService({ username: route.query.username as string })
+  console.log('打印res1', res1.data.data[0])
+  waterfallList.value = res1.data.data
 })
 </script>
 <style lang="scss" scoped>
@@ -253,6 +202,9 @@ onMounted(async () => {
       &:nth-child(1) {
         margin-left: 0;
       }
+      &:nth-child(3) {
+        margin-right: auto;
+      }
       .myself-bottom-num {
         color: #ffffff;
         font-size: 15px;
@@ -285,7 +237,7 @@ onMounted(async () => {
   }
 }
 .waterfall-list[data-v-1c4c57b0] {
-  background-color: #f5f5f5;
+  // background-color: #f5f5f5;
   .card {
     background-color: #ffffff;
     border-radius: 8px;

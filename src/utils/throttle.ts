@@ -10,15 +10,3 @@ export const throttle = (func: any, delay: number) => {
     }
   }
 }
-
-// export const debounce = (func: any, delay: number) => {
-//   let timber: any
-//   return function () {
-//     if (timber) {
-//       clearTimeout(timber)
-//     }
-//     timber = setTimeout(() => {
-//       func()
-//     }, delay)
-//   }
-// }
