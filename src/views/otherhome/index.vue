@@ -2,7 +2,7 @@
   <!-- 固定导航 -->
   <div class="fixedNav">
     <div ref="navTopDom" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
-      <van-icon name="wap-nav" @click="() => router.back()" />
+      <van-icon name="arrow-left" @click="() => router.back()" />
       <img v-show="isBrown" class="nav-top-avatar" :src="otherInfo?.avatar" alt="" />
       <van-icon name="ellipsis" />
     </div>
@@ -175,8 +175,9 @@ onMounted(async () => {
     padding: 8px 0;
     background-color: transparent;
     color: #ffffff;
-    .van-icon-wap-nav {
-      margin-left: 8px;
+    .van-icon-arrow-left {
+      margin-left: 5px;
+      font-size: 16px;
     }
     .van-icon-ellipsis {
       margin-right: 8px;

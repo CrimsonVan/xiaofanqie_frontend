@@ -62,7 +62,7 @@
           </div>
         </div>
         <div v-if="item.status === '未通过'" class="img-unpass"></div>
-        <div v-if="item.status === '未通过'" class="img-unpass-title">审核中</div>
+        <div v-if="item.status === '未通过'" class="img-unpass-title">审 核 中</div>
       </div>
     </template>
   </Waterfall>
@@ -340,8 +340,7 @@ onMounted(async () => {
       top: 0px;
       width: 100%;
       height: 100%;
-      background-color: black;
-      opacity: 0.5;
+      background-color: rgb(19, 20, 22, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -356,7 +355,7 @@ onMounted(async () => {
       justify-content: center;
       align-items: center;
       font-size: 15px;
-      color: red;
+      color: #ffffff;
       font-weight: 600;
     }
     .card-img {
