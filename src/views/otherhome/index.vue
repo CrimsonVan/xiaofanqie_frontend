@@ -1,10 +1,19 @@
 <template>
-  <div class="nav-top">
-    <van-icon @click="goback" name="arrow-left" />
-    <van-icon name="ellipsis" />
+  <!-- 固定导航 -->
+  <div class="fixedNav">
+    <div ref="navTopDom" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
+      <van-icon name="wap-nav" @click="() => router.back()" />
+      <img v-show="isBrown" class="nav-top-avatar" :src="otherInfo?.avatar" alt="" />
+      <van-icon name="ellipsis" />
+    </div>
+    <div class="whiteFixed" :class="[isWhite ? 'whiteFixed_active' : 'whiteFixed']">
+      <div class="whiteFixedNote">笔记</div>
+    </div>
   </div>
-  <div class="myself-bg">
-    <div class="myself-bg-top">
+  <!-- 主页信息 -->
+  <div class="myself-bg" ref="myselfbgDom">
+    <div class="myself-bg-safe" ref="safeSpaceDom"></div>
+    <div class="myself-bg-top" ref="topInfoDom">
       <img class="myself-top-avatar" :src="otherInfo?.avatar" alt="" />
       <div class="myself-top-name">
         <div>{{ otherInfo?.nick_name }}</div>
@@ -16,24 +25,43 @@
     <div class="myself-bg-bottom">
       <div class="myself-bottom-num-part">
         <div class="myself-bottom-num">{{ otherInfo?.follow_num }}</div>
-        <div @click="goFollows(otherInfo?.username as string)" class="myself-bottom-title">
+        <div
+          @click="() => router.push(`/follows?type=other&username=${otherInfo?.username}`)"
+          class="myself-bottom-title"
+        >
           关注
         </div>
       </div>
       <div class="myself-bottom-num-part">
         <div class="myself-bottom-num">{{ otherInfo?.fans_num }}</div>
-        <div @click="goFans(otherInfo?.username as string)" class="myself-bottom-title">粉丝</div>
+        <div
+          @click="() => router.push(`/fans?type=other&username=${otherInfo?.username}`)"
+          class="myself-bottom-title"
+        >
+          粉丝
+        </div>
       </div>
       <div class="myself-bottom-num-part">
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
       <followButton :isOther="true" :detailInfo="otherInfo"></followButton>
-      <!-- :detailInfo="{ type: 'otherInfo', ...otherInfo }" -->
-      <van-button @click="goChat" round icon="chat-o" type="primary" class="msg" />
+      <van-button
+        @click="
+          () =>
+            router.push(
+              `/chat?fromUsername=${useStore.userInfo.username}&toUsername=${otherInfo?.username}&friendName=${otherInfo?.nick_name}&friendAvatar=${otherInfo?.avatar}`
+            )
+        "
+        round
+        icon="chat-o"
+        type="primary"
+        class="msg"
+      />
     </div>
-    <div class="white-title">笔记</div>
+    <div class="white-title" ref="whiteTitleDom">笔记</div>
   </div>
+  <!-- 瀑布流 -->
   <Waterfall
     :delay="5"
     :posDuration="10"
@@ -44,10 +72,8 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="godetail(item.id)" class="card">
-        <!-- <img class="card-img" :src="item.content_img" alt="" /> -->
+      <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
         <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
-
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
@@ -70,11 +96,22 @@ import { useNumStore } from '@/stores'
 import { getUserPostService } from '@/api/post'
 import followButton from '@/components/followButton.vue'
 import type { userInfoDataAllRes, userInfoData } from '@/type/user'
+import type { postData, postAllDataRes } from '@/type/post'
 const useStore = useNumStore()
 const route = useRoute()
 const router = useRouter()
 const otherInfo = ref<userInfoData>()
-const waterfallList = ref()
+const navAvatarShowHeight = ref<number>() //导航栏显示头像所需滚动高度
+const whiteTitleFixedHeight = ref<number>() //笔记固定所需的滚动的高度
+const navTopDom = ref<any>(null) //头部导航的dom
+const safeSpaceDom = ref<any>(null) //安全区域dom
+const topInfoDom = ref<any>(null) //上半部分个人信息区域dom
+const myselfbgDom = ref<any>(null) //整个个人信息区域dom
+const whiteTitleDom = ref<any>(null) //笔记标题dom
+const waterfallList = ref<Array<postData>>() //帖子列表
+const isBrown = ref<boolean>(false) //头部导航的头像是否固定
+const isWhite = ref<boolean>(false) //笔记标题是否固定
+//瀑布流参数设置
 const breakpoints = ref({
   3000: {
     //当屏幕宽度小于等于3000
@@ -94,69 +131,116 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
-const goback = () => {
-  router.back()
-}
-const goChat = () => {
-  let fromUsername = useStore.userInfo.username
-  let toUsername = otherInfo.value?.username
-  router.push(
-    `/chat?fromUsername=${fromUsername}&toUsername=${toUsername}&friendName=${otherInfo.value?.nick_name}&friendAvatar=${otherInfo.value?.avatar}`
-  )
-}
-const goFollows = (username: string) => {
-  router.push(`/follows?type=other&username=${username}`)
-}
-const goFans = (username: string) => {
-  router.push(`/fans?type=other&username=${username}`)
-}
-const godetail = (id: number) => {
-  router.push(`/detail?id=${id}`)
+// 触底函数
+const onBottom = () => {
+  // 获取滚动高度
+  let scrollTop = document.documentElement.scrollTop
+  if (scrollTop > (navAvatarShowHeight.value as number)) {
+    isBrown.value = true
+  } else {
+    isBrown.value = false
+  }
+  if (scrollTop > (whiteTitleFixedHeight.value as number)) {
+    isWhite.value = true
+  } else {
+    isWhite.value = false
+  }
 }
 onMounted(async () => {
+  document.addEventListener('scroll', onBottom)
   let res: userInfoDataAllRes = await userGetInfoService({
     username: route.query.username as string
   })
   otherInfo.value = res.data.data
-  console.log('otherInfo', otherInfo.value)
-
-  let res1 = await getUserPostService({ username: route.query.username as string })
-  console.log('打印res1', res1.data.data[0])
+  let res1: postAllDataRes = await getUserPostService({ username: route.query.username as string })
   waterfallList.value = res1.data.data
+  navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
+  whiteTitleFixedHeight.value =
+    myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight
 })
 </script>
 <style lang="scss" scoped>
-.nav-top {
-  display: flex;
+.fixedNav {
   position: fixed;
   z-index: 990;
   top: 0;
   width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 20px;
-  padding: 8px 0;
-  background-color: transparent;
-  // background-color: salmon;
-  color: #ffffff;
-  .van-icon-arrow-left {
-    margin-left: 4px;
+  .nav-top {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding: 8px 0;
+    background-color: transparent;
+    color: #ffffff;
+    .van-icon-wap-nav {
+      margin-left: 8px;
+    }
+    .van-icon-ellipsis {
+      margin-right: 8px;
+    }
+    .nav-top-avatar {
+      width: 24px;
+      height: 24px;
+      overflow: hidden;
+      border-radius: 50%;
+    }
   }
-  .van-icon-ellipsis {
-    margin-right: 8px;
+  .nav-top-brown {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding: 8px 0;
+    background-color: #6f6161;
+    color: #ffffff;
+    .van-icon-wap-nav {
+      margin-left: 8px;
+    }
+    .van-icon-ellipsis {
+      margin-right: 8px;
+    }
+    .nav-top-avatar {
+      width: 24px;
+      height: 24px;
+      overflow: hidden;
+      border-radius: 50%;
+      background-color: #ffffff;
+    }
   }
-  .nav-top-avatar {
-    width: 24px;
-    height: 24px;
-    overflow: hidden;
-    border-radius: 50%;
+  .whiteFixed {
+    visibility: hidden;
+    width: 100%;
+    background-color: #6f6161;
+    height: 36px;
+  }
+  .whiteFixed_active {
+    visibility: visible;
+    width: 100%;
+    background-color: #6f6161;
+    height: 36px;
+    .whiteFixedNote {
+      background-color: #ffffff;
+      height: 100%;
+      border-radius: 12px 12px 0 0;
+      margin-bottom: 0;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
   }
 }
 .myself-bg {
-  padding: 50px 0px 0px;
-  // width: 100%;
-  min-height: 210px;
+  padding: 36px 0px 0px;
+  overflow: hidden;
   background-color: #6f6161;
+  .myself-bg-safe {
+    width: 100%;
+    height: 10px;
+  }
   .myself-bg-top {
     // width: 100%;
     margin: 0 10px;

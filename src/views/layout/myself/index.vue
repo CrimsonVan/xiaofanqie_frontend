@@ -1,8 +1,7 @@
 <template>
-  <!-- 导航按 -->
-
+  <!-- 固定导航 -->
   <div class="fixedNav">
-    <div ref="navTopRef" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
+    <div ref="navTopDom" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
       <van-icon name="wap-nav" @click="() => (showLeft = true)" />
       <img v-show="isBrown" class="nav-top-avatar" :src="useStore.userInfo.avatar" alt="" />
       <van-icon name="ellipsis" />
@@ -11,10 +10,10 @@
       <div class="whiteFixedNote">笔记</div>
     </div>
   </div>
-  <!-- 背景 -->
+  <!-- 主页信息 -->
   <div class="myself-bg" ref="myselfbgDom">
-    <div class="myself-bg-safe" ref="myselfbgRef"></div>
-    <div class="myself-bg-top" ref="myselfbgtopRef">
+    <div class="myself-bg-safe" ref="safeSpaceDom"></div>
+    <div class="myself-bg-top" ref="topInfoDom">
       <img class="myself-top-avatar" :src="useStore.userInfo.avatar" alt="" />
       <div class="myself-top-name">
         <div>{{ useStore.userInfo.nick_name }}</div>
@@ -23,12 +22,12 @@
       </div>
     </div>
     <div class="myself-bg-middle">{{ useStore.userInfo.signature }}</div>
-    <div class="myself-bg-bottom" ref="btnAndFollowDom">
-      <div class="myself-bottom-num-part" @click="goFollows">
+    <div class="myself-bg-bottom">
+      <div class="myself-bottom-num-part" @click="() => router.push('/follows?type=myself')">
         <div class="myself-bottom-num">{{ useStore.followsLength }}</div>
         <div class="myself-bottom-title">关注</div>
       </div>
-      <div class="myself-bottom-num-part" @click="goFans">
+      <div class="myself-bottom-num-part" @click="() => router.push('/fans?type=myself')">
         <div class="myself-bottom-num">{{ useStore.fansLength }}</div>
         <div class="myself-bottom-title">粉丝</div>
       </div>
@@ -36,7 +35,7 @@
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
-      <van-button @click="goProfile" round class="btn">编辑资料</van-button>
+      <van-button @click="() => router.push('/profile')" round class="btn">编辑资料</van-button>
       <van-button round icon="setting-o" type="primary" class="msg" />
     </div>
     <div ref="whiteTitleDom" class="white-title">笔记</div>
@@ -52,7 +51,7 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="godetail(item.id)" class="card">
+      <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
         <LazyImg class="card-img" :url="item.content_img.split(',')[0]"> </LazyImg>
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
@@ -78,36 +77,35 @@
 <script lang="ts" setup>
 import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { getUserPostService } from '@/api/post'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
+import type { postAllDataRes, postData } from '@/type/post'
 import socket from '@/utils/connectSocket'
-const showLeft = ref<boolean>(false)
 const router = useRouter()
 const useStore = useNumStore()
-const waterfallArr = ref()
-const navTopRef = ref<any>(null)
-const navAvatarShowHeight = ref() //导航栏显示头像所需滚动高度
-const whiteTitleFixedHeight = ref() //笔记固定所需滚动高度
-const myselfbgRef = ref<any>(null)
-const myselfbgtopRef = ref<any>(null)
-const myselfbgDom = ref<any>(null) //背景dom层
-const whiteTitleDom = ref<any>(null) //笔记dom层
-const btnAndFollowDom = ref<any>(null) //关注按钮dom曾
-const isBrown = ref(false)
-const isWhite = ref(false)
-const goProfile = () => {
-  router.push('/profile')
-}
+const waterfallArr = ref<Array<postData>>() //帖子列表
+const navTopDom = ref<any>(null) //头部导航的dom
+const navAvatarShowHeight = ref<number>() //导航栏显示头像所需滚动高度
+const whiteTitleFixedHeight = ref<number>() //笔记固定所需的滚动的高度
+const safeSpaceDom = ref<any>(null) //安全区域dom
+const topInfoDom = ref<any>(null) //上半部分个人信息区域dom
+const myselfbgDom = ref<any>(null) //整个个人信息区域dom
+const whiteTitleDom = ref<any>(null) //笔记标题dom
+const isBrown = ref<boolean>(false) //头部导航的头像是否固定
+const isWhite = ref<boolean>(false) //笔记标题是否固定
+const showLeft = ref<boolean>(false) //是否显示左边抽屉
+//退出登录
 const logout = () => {
   socket.emit('logout', useStore.userInfo.username)
   useStore.clearToken()
   showLeft.value = false
-  setTimeout(() => {
+  nextTick(() => {
     router.push('/login')
-  }, 300)
+  })
 }
+//瀑布流参数设置
 const breakpoints = ref({
   3000: {
     //当屏幕宽度小于等于3000
@@ -127,39 +125,29 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
-const goFollows = () => {
-  router.push('/follows?type=myself')
-}
-const goFans = () => {
-  router.push('/fans?type=myself')
-}
-const godetail = (id: string) => {
-  router.push(`/detail?id=${id}`)
-}
 // 触底函数
-async function onBottom() {
+const onBottom = () => {
   // 获取滚动高度
   let scrollTop = document.documentElement.scrollTop
-  if (scrollTop > navAvatarShowHeight.value) {
+  if (scrollTop > (navAvatarShowHeight.value as number)) {
     isBrown.value = true
   } else {
     isBrown.value = false
   }
-  if (scrollTop > whiteTitleFixedHeight.value) {
+  if (scrollTop > (whiteTitleFixedHeight.value as number)) {
     isWhite.value = true
   } else {
     isWhite.value = false
   }
 }
 
-document.addEventListener('scroll', onBottom)
-
 onMounted(async () => {
-  let res = await getUserPostService({ username: useStore.userInfo.username })
+  document.addEventListener('scroll', onBottom)
+  let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
   waterfallArr.value = res.data.data
-  navAvatarShowHeight.value = myselfbgRef.value.clientHeight + myselfbgtopRef.value.clientHeight
+  navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
-    myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopRef.value.clientHeight
+    myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight
 })
 </script>
 
@@ -239,8 +227,8 @@ onMounted(async () => {
 }
 
 .myself-bg {
-  padding: 40px 0px 0px;
-  min-height: 210px;
+  padding: 36px 0px 0px;
+  overflow: hidden;
   background-color: #6f6161;
   .myself-bg-safe {
     width: 100%;
