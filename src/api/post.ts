@@ -2,8 +2,11 @@ import request from '../utils/request'
 import type { postAllDataRes, postQuery, postOneDataRes } from '@/type/post'
 // 帖子接口
 //获取所有帖子
-export const getPostService = ({ pagenum }: postQuery) =>
-  request.post<any, postAllDataRes>('/post/get', { pagenum })
+export const getPostService = ({ pagenum, cate_id }: { pagenum: any; cate_id?: any }) =>
+  request.post<any, postAllDataRes>('/post/get', { pagenum, cate_id, status: '通过' })
+//获取客户端所有帖子
+export const getClientPostService = ({ pagenum, cate_id }: { pagenum: any; cate_id?: any }) =>
+  request.post<any, postAllDataRes>('/post/getClient', { pagenum, cate_id, status: '通过' })
 //获取关注的所有帖子
 export const getFollowPostService = ({ username, pagenum }: any) =>
   request.post<any, postAllDataRes>('/post/getFollow', { username, pagenum })

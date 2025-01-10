@@ -1,10 +1,18 @@
 <template>
-  <div ref="navTopRef" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
-    <van-icon name="wap-nav" @click="() => (showLeft = true)" />
-    <img v-show="isBrown" class="nav-top-avatar" :src="useStore.userInfo.avatar" alt="" />
-    <van-icon name="ellipsis" />
+  <!-- 导航按 -->
+
+  <div class="fixedNav">
+    <div ref="navTopRef" :class="[isBrown ? 'nav-top-brown' : 'nav-top']">
+      <van-icon name="wap-nav" @click="() => (showLeft = true)" />
+      <img v-show="isBrown" class="nav-top-avatar" :src="useStore.userInfo.avatar" alt="" />
+      <van-icon name="ellipsis" />
+    </div>
+    <div class="whiteFixed" :class="[isWhite ? 'whiteFixed_active' : 'whiteFixed']">
+      <div class="whiteFixedNote">笔记</div>
+    </div>
   </div>
-  <div class="myself-bg">
+  <!-- 背景 -->
+  <div class="myself-bg" ref="myselfbgDom">
     <div class="myself-bg-safe" ref="myselfbgRef"></div>
     <div class="myself-bg-top" ref="myselfbgtopRef">
       <img class="myself-top-avatar" :src="useStore.userInfo.avatar" alt="" />
@@ -15,13 +23,13 @@
       </div>
     </div>
     <div class="myself-bg-middle">{{ useStore.userInfo.signature }}</div>
-    <div class="myself-bg-bottom">
+    <div class="myself-bg-bottom" ref="btnAndFollowDom">
       <div class="myself-bottom-num-part" @click="goFollows">
         <div class="myself-bottom-num">{{ useStore.followsLength }}</div>
         <div class="myself-bottom-title">关注</div>
       </div>
-      <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">1048</div>
+      <div class="myself-bottom-num-part" @click="goFans">
+        <div class="myself-bottom-num">{{ useStore.fansLength }}</div>
         <div class="myself-bottom-title">粉丝</div>
       </div>
       <div class="myself-bottom-num-part">
@@ -31,8 +39,9 @@
       <van-button @click="goProfile" round class="btn">编辑资料</van-button>
       <van-button round icon="setting-o" type="primary" class="msg" />
     </div>
-    <div class="white-title">笔记</div>
+    <div ref="whiteTitleDom" class="white-title">笔记</div>
   </div>
+  <!-- 瀑布流 -->
   <Waterfall
     :delay="5"
     :posDuration="10"
@@ -44,8 +53,7 @@
   >
     <template #default="{ item }">
       <div @click="godetail(item.id)" class="card">
-        <!-- <img class="card-img" :src="item.content_img" alt="" /> -->
-        <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
+        <LazyImg class="card-img" :url="item.content_img.split(',')[0]"> </LazyImg>
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
@@ -54,10 +62,11 @@
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
+        <div v-if="item.status === '未通过'" class="img-unpass"></div>
+        <div v-if="item.status === '未通过'" class="img-unpass-title">审核中</div>
       </div>
     </template>
   </Waterfall>
-
   <!-- 左侧弹出 -->
   <van-popup v-model:show="showLeft" position="left" :style="{ width: '70%', height: '100%' }">
     <!--  -->
@@ -74,17 +83,20 @@ import { getUserPostService } from '@/api/post'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import socket from '@/utils/connectSocket'
-import { throttle } from '@/utils/throttle'
-
 const showLeft = ref<boolean>(false)
 const router = useRouter()
 const useStore = useNumStore()
 const waterfallArr = ref()
-const navTopRef = ref<any>()
-const navTopScrollHeight = ref()
-const myselfbgRef = ref<any>()
-const myselfbgtopRef = ref<any>()
+const navTopRef = ref<any>(null)
+const navAvatarShowHeight = ref() //导航栏显示头像所需滚动高度
+const whiteTitleFixedHeight = ref() //笔记固定所需滚动高度
+const myselfbgRef = ref<any>(null)
+const myselfbgtopRef = ref<any>(null)
+const myselfbgDom = ref<any>(null) //背景dom层
+const whiteTitleDom = ref<any>(null) //笔记dom层
+const btnAndFollowDom = ref<any>(null) //关注按钮dom曾
 const isBrown = ref(false)
+const isWhite = ref(false)
 const goProfile = () => {
   router.push('/profile')
 }
@@ -116,7 +128,10 @@ const breakpoints = ref({
   }
 })
 const goFollows = () => {
-  router.push('/follows')
+  router.push('/follows?type=myself')
+}
+const goFans = () => {
+  router.push('/fans?type=myself')
 }
 const godetail = (id: string) => {
   router.push(`/detail?id=${id}`)
@@ -125,79 +140,101 @@ const godetail = (id: string) => {
 async function onBottom() {
   // 获取滚动高度
   let scrollTop = document.documentElement.scrollTop
-
-  if (scrollTop > navTopScrollHeight.value) {
+  if (scrollTop > navAvatarShowHeight.value) {
     isBrown.value = true
   } else {
     isBrown.value = false
   }
+  if (scrollTop > whiteTitleFixedHeight.value) {
+    isWhite.value = true
+  } else {
+    isWhite.value = false
+  }
 }
-let throttledScroll = throttle(onBottom, 300)
-document.addEventListener('scroll', throttledScroll)
+
+document.addEventListener('scroll', onBottom)
+
 onMounted(async () => {
   let res = await getUserPostService({ username: useStore.userInfo.username })
-  console.log('打印个人帖子', res.data.data)
   waterfallArr.value = res.data.data
-
-  navTopScrollHeight.value = myselfbgRef.value.clientHeight + myselfbgtopRef.value.clientHeight
-  console.log('打印topNav高度', navTopScrollHeight.value)
+  navAvatarShowHeight.value = myselfbgRef.value.clientHeight + myselfbgtopRef.value.clientHeight
+  whiteTitleFixedHeight.value =
+    myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopRef.value.clientHeight
 })
 </script>
 
 <style lang="scss" scoped>
-.nav-top {
-  display: flex;
+.fixedNav {
   position: fixed;
   z-index: 990;
   top: 0;
   width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 20px;
-  padding: 8px 0;
-  background-color: transparent;
-  // background-color: pink;
-  // background-color: salmon;
-  color: #ffffff;
-  .van-icon-wap-nav {
-    margin-left: 8px;
+  .nav-top {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding: 8px 0;
+    background-color: transparent;
+    color: #ffffff;
+    .van-icon-wap-nav {
+      margin-left: 8px;
+    }
+    .van-icon-ellipsis {
+      margin-right: 8px;
+    }
+    .nav-top-avatar {
+      width: 24px;
+      height: 24px;
+      overflow: hidden;
+      border-radius: 50%;
+    }
   }
-  .van-icon-ellipsis {
-    margin-right: 8px;
+  .nav-top-brown {
+    display: flex;
+    height: 36px;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding: 8px 0;
+    background-color: #6f6161;
+    color: #ffffff;
+    .van-icon-wap-nav {
+      margin-left: 8px;
+    }
+    .van-icon-ellipsis {
+      margin-right: 8px;
+    }
+    .nav-top-avatar {
+      width: 24px;
+      height: 24px;
+      overflow: hidden;
+      border-radius: 50%;
+      background-color: #ffffff;
+    }
   }
-  .nav-top-avatar {
-    width: 24px;
-    height: 24px;
-    overflow: hidden;
-    border-radius: 50%;
-    // background-color: #fff;
+  .whiteFixed {
+    visibility: hidden;
+    width: 100%;
+    background-color: #6f6161;
+    height: 36px;
   }
-}
-
-.nav-top-brown {
-  display: flex;
-  position: fixed;
-  z-index: 990;
-  top: 0;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 20px;
-  padding: 8px 0;
-  background-color: #6f6161;
-  color: #ffffff;
-  .van-icon-wap-nav {
-    margin-left: 8px;
-  }
-  .van-icon-ellipsis {
-    margin-right: 8px;
-  }
-  .nav-top-avatar {
-    width: 24px;
-    height: 24px;
-    overflow: hidden;
-    border-radius: 50%;
-    background-color: #ffffff;
+  .whiteFixed_active {
+    visibility: visible;
+    width: 100%;
+    background-color: #6f6161;
+    height: 36px;
+    .whiteFixedNote {
+      background-color: #ffffff;
+      height: 100%;
+      border-radius: 12px 12px 0 0;
+      margin-bottom: 0;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
   }
 }
 
@@ -210,9 +247,7 @@ onMounted(async () => {
     height: 10px;
   }
   .myself-bg-top {
-    // width: 100%;
     margin: 0 10px;
-    // background-color: sandybrown;
     display: flex;
     align-items: center;
     .myself-top-avatar {
@@ -296,7 +331,6 @@ onMounted(async () => {
   .white-title {
     width: 100%;
     background-color: #ffffff;
-    // background-color: salmon;
     height: 36px;
     border-radius: 12px 12px 0 0;
     margin-bottom: 0;
@@ -310,6 +344,33 @@ onMounted(async () => {
     background-color: #ffffff;
     border-radius: 8px;
     overflow: hidden;
+    position: relative;
+    .img-unpass {
+      color: #ccc;
+      position: absolute;
+      right: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      opacity: 0.5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .img-unpass-title {
+      position: absolute;
+      right: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 15px;
+      color: red;
+      font-weight: 600;
+    }
     .card-img {
       width: 100%;
     }

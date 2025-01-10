@@ -1,6 +1,5 @@
 <template>
   <div class="nav-top">
-    <!-- <van-icon name="wap-nav" /> -->
     <van-icon @click="goback" name="arrow-left" />
     <van-icon name="ellipsis" />
   </div>
@@ -16,21 +15,21 @@
     <div class="myself-bg-middle">肚子好饿~~~</div>
     <div class="myself-bg-bottom">
       <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">48</div>
-        <div class="myself-bottom-title">关注</div>
+        <div class="myself-bottom-num">{{ otherInfo?.follow_num }}</div>
+        <div @click="goFollows(otherInfo?.username as string)" class="myself-bottom-title">
+          关注
+        </div>
       </div>
       <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">1048</div>
-        <div class="myself-bottom-title">粉丝</div>
+        <div class="myself-bottom-num">{{ otherInfo?.fans_num }}</div>
+        <div @click="goFans(otherInfo?.username as string)" class="myself-bottom-title">粉丝</div>
       </div>
       <div class="myself-bottom-num-part">
         <div class="myself-bottom-num">4822</div>
         <div class="myself-bottom-title">获赞</div>
       </div>
-      <followButton
-        :isOther="true"
-        :detailInfo="{ type: 'otherInfo', ...otherInfo }"
-      ></followButton>
+      <followButton :isOther="true" :detailInfo="otherInfo"></followButton>
+      <!-- :detailInfo="{ type: 'otherInfo', ...otherInfo }" -->
       <van-button @click="goChat" round icon="chat-o" type="primary" class="msg" />
     </div>
     <div class="white-title">笔记</div>
@@ -70,10 +69,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import { getUserPostService } from '@/api/post'
 import followButton from '@/components/followButton.vue'
+import type { userInfoDataAllRes, userInfoData } from '@/type/user'
 const useStore = useNumStore()
 const route = useRoute()
 const router = useRouter()
-const otherInfo = ref()
+const otherInfo = ref<userInfoData>()
 const waterfallList = ref()
 const breakpoints = ref({
   3000: {
@@ -99,17 +99,27 @@ const goback = () => {
 }
 const goChat = () => {
   let fromUsername = useStore.userInfo.username
-  let toUsername = otherInfo.value.username
+  let toUsername = otherInfo.value?.username
   router.push(
-    `/chat?fromUsername=${fromUsername}&toUsername=${toUsername}&friendName=${otherInfo.value.nick_name}&friendAvatar=${otherInfo.value.avatar}`
+    `/chat?fromUsername=${fromUsername}&toUsername=${toUsername}&friendName=${otherInfo.value?.nick_name}&friendAvatar=${otherInfo.value?.avatar}`
   )
+}
+const goFollows = (username: string) => {
+  router.push(`/follows?type=other&username=${username}`)
+}
+const goFans = (username: string) => {
+  router.push(`/fans?type=other&username=${username}`)
 }
 const godetail = (id: number) => {
   router.push(`/detail?id=${id}`)
 }
 onMounted(async () => {
-  let res = await userGetInfoService({ username: route.query.username as string })
+  let res: userInfoDataAllRes = await userGetInfoService({
+    username: route.query.username as string
+  })
   otherInfo.value = res.data.data
+  console.log('otherInfo', otherInfo.value)
+
   let res1 = await getUserPostService({ username: route.query.username as string })
   console.log('打印res1', res1.data.data[0])
   waterfallList.value = res1.data.data

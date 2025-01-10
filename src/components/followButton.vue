@@ -18,7 +18,7 @@
 import { useNumStore } from '@/stores'
 import { ref, watch } from 'vue'
 const useStore = useNumStore()
-const isFollow = ref<boolean>(false)
+const isFollow = ref<boolean>(false) //是否被关注
 let props = defineProps({
   detailInfo: {
     type: Object
@@ -28,6 +28,7 @@ let props = defineProps({
     default: false
   }
 })
+//判断是否已经关注
 const isFollowed = () => {
   let index = useStore.follows.findIndex(
     (item: any) => item.followUsername === props?.detailInfo?.username
@@ -40,10 +41,9 @@ const isFollowed = () => {
     isFollow.value = true
   }
 }
-
+//关注操作
 const followHandle = async () => {
   isFollow.value = true
-
   await useStore.addFollows({
     username: useStore.userInfo.username,
     followUsername: props?.detailInfo?.username,
@@ -51,7 +51,7 @@ const followHandle = async () => {
     followAvatar: props?.detailInfo?.avatar
   })
 }
-
+//取消关注操作
 const unfollowHandle = async () => {
   isFollow.value = false
   await useStore.delFollows({
@@ -63,7 +63,6 @@ const unfollowHandle = async () => {
 watch(
   () => props.detailInfo,
   (newVal) => {
-    console.log('打印newVal', newVal)
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     newVal && isFollowed()
   },
@@ -79,11 +78,8 @@ watch(
   height: 24px;
   min-width: 52px;
   margin-right: 8px;
-
   font-size: 12px;
   padding: 3px;
-  // color: #ff1e42;
-  // border-color: #ff1e42;
   color: var(--theme-color);
   border-color: var(--theme-color);
 }

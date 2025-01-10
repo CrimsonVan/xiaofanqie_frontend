@@ -42,7 +42,8 @@
         @keydown="search2($event)"
       />
       <van-icon @click="showEmo" name="smile-o" />
-      <van-icon @click="sendMsg" name="add-o" />
+      <!-- <van-icon @click="sendMsg" name="add-o" /> -->
+      <van-button :disabled="isMessageEmpty" class="send-btn" @click="sendMsg">发送</van-button>
     </div>
     <div v-if="showEmoji" class="bottom-emoji">
       <div class="bottom-emoji-line" v-for="(line, index) in emojiArr" :key="index">
@@ -54,7 +55,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import socket from '@/utils/connectSocket'
 import { useNumStore } from '@/stores'
@@ -68,6 +69,7 @@ const message = ref<string>('') //输入栏消息
 const friendName = ref<string>('') //左上角好友名字
 const friendAvatar = ref<string>('') //左上角好友头像
 const friendUsername = ref<string>('') //左上角好友的用户名
+const isMessageEmpty = computed(() => message.value === '')
 const testFocus = () => {
   console.log('focus了')
   showEmoji.value = false
@@ -289,9 +291,20 @@ onMounted(async () => {
       margin-bottom: 3px;
     }
     .inp {
-      width: 73%;
+      width: 65%;
       padding: 4px 6px;
       border-radius: 4px;
+    }
+    .send-btn {
+      padding: 0;
+      background-color: #388aef;
+      color: #ffffff;
+      width: 44px;
+      height: 27px;
+      margin-bottom: 2px;
+      border-color: #388aef;
+      margin-right: 2px;
+      font-size: 12px;
     }
   }
   .bottom-emoji {

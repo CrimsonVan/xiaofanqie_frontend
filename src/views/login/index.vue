@@ -60,7 +60,7 @@
 import { ref, computed } from 'vue'
 import { userLoginService, userRegisterService } from '@/api/user'
 import { useNumStore } from '@/stores'
-import { showFailToast, showSuccessToast } from 'vant'
+import { showSuccessToast } from 'vant'
 const useStore = useNumStore()
 const username = ref('13114209341')
 const password = ref('123456')
@@ -75,28 +75,16 @@ const onSubmit = async () => {
     username: username.value,
     password: password.value
   })
-  console.log('打印登录接口返回结果', res)
   useStore.setToken(res.data.token)
   await useStore.getUserInfo(username.value)
   await useStore.getFollows()
-  if (res.data.code === 0) {
-    router.push('/home')
-    console.log('登陆成功并且跳转')
-  } else {
-    console.log('登陆失败')
-  }
+  await useStore.getFans()
+  router.push('/home')
 }
 const onSubmit2 = async () => {
-  let res = await userRegisterService({ username: username.value, password: password.value })
-  console.log('打印注册的res', res.data.data)
-  if (res.data.message === '用户名已被占用') {
-    console.log('用户名已被占用')
-    showFailToast('用户名已被占用')
-  } else {
-    showSuccessToast('注册成功')
-    // console.log()
-    changeForm()
-  }
+  await userRegisterService({ username: username.value, password: password.value })
+  showSuccessToast('注册成功')
+  changeForm()
 }
 const isEmpty = computed(() => username.value === '' || password.value === '')
 const validator = (val: string) => /^1\d{10}$/.test(val)

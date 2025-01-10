@@ -11,7 +11,7 @@
       <span class="nav-name">{{ detailInfo?.nick_name }}</span>
     </template>
     <template #right>
-      <followButton :detailInfo="detailInfo"></followButton>
+      <followButton :isOther="false" :detailInfo="detailInfo"></followButton>
       <van-icon v-if="useStore.userInfo.username !== detailInfo?.username" name="share-o" />
       <van-icon v-else @click="() => (showBottom = true)" name="ellipsis" />
     </template>
@@ -20,7 +20,6 @@
 
   <van-swipe :height="swipeHeight">
     <van-swipe-item v-for="(item, index) in detailInfo?.content_img.split(',')" :key="index">
-      <!-- <img class="img" :src="detailInfo?.content_img" /> -->
       <van-image width="100%" :height="swipeHeight" fit="contain" :src="item" />
     </van-swipe-item>
     <template #indicator="{ active, total }">
@@ -28,15 +27,15 @@
     </template>
   </van-swipe>
 
-  <div class="detail-main">
+  <div v-if="isImgLoadingEnd" class="detail-main">
     <h4>{{ detailInfo?.title }}</h4>
     <div class="detail-main-content">
       {{ detailInfo?.content }}
     </div>
     <div class="detail-main-data">{{ detailInfo?.pub_time }} 广东</div>
   </div>
-  <div class="comment-num">共 {{ detailInfo?.comment_count }} 条评论</div>
-  <div class="comment-main">
+  <div v-if="isImgLoadingEnd" class="comment-num">共 {{ detailInfo?.comment_count }} 条评论</div>
+  <div v-if="isImgLoadingEnd" class="comment-main">
     <commentPart
       :ref="
         (e: any) => {
@@ -51,6 +50,7 @@
   </div>
   <div class="bottom-input">
     <van-field
+      ref="inpRef"
       left-icon="edit"
       v-model="message"
       rows="1"
@@ -109,17 +109,11 @@ const detailInfo = ref<postData>()
 const commentFirstArr = ref<commentData[]>([]) //一级评论列表
 const atContent = ref<string>('请输入消息')
 const commentReplyRef = ref<any>([])
-// const swipeImgRef = ref<any>([])
 const swipeHeight = ref<any>()
 const curIndex = ref<number>(0)
 const showBottom = ref<boolean>(false)
-// const testImg = ref([
-//   '	http://47.109.186.26:3007/uploads/dd1bda1296b4a869309c197f88c2e099',
-//   '	http://47.109.186.26:3007/uploads/b7f40f6fb462b88bfebc5db24cd47197',
-
-//   '	http://47.109.186.26:3007/uploads/ff5707de6a546fef707dcdd9abfebdab',
-//   'http://47.109.186.26:3007/uploads/c26e947c1f7013f922662291a408b692'
-// ])
+const isImgLoadingEnd = ref<boolean>(false)
+const inpRef = ref<any>()
 let msgObj = ref({
   avatar: useStore.userInfo.avatar,
   content: '',
@@ -131,7 +125,7 @@ let msgObj = ref({
   reply_username: '0', //3级
   username: useStore.userInfo.username,
   father_length: 0
-})
+}) //发送信息
 
 const goOther = (username: string) => {
   if (username === useStore.userInfo.username) {
@@ -141,14 +135,15 @@ const goOther = (username: string) => {
   }
 }
 const getChildMsg = (val: commentsSonToFather, index: number) => {
-  console.log('打印index', index)
+  // console.log('打印index', index)
+  console.log('打印inp的dom', inpRef.value.focus())
   curIndex.value = index
-  console.log('打印子传父亲', val)
+  // console.log('打印子传父亲', val)
   atContent.value = `回复 @${val.reply_nickname}:`
   msgObj.value.parent_comment_id = val.parent_comment_id
   msgObj.value.father_length = val.father_length
   if (val.reply_comment_id) {
-    console.log('真的三级评论')
+    // console.log('真的三级评论')
     msgObj.value.reply_comment_id = val.reply_comment_id
     msgObj.value.reply_nickname = val.reply_nickname
     msgObj.value.reply_username = val.reply_username as string
@@ -166,6 +161,7 @@ const sendMsg = async () => {
   message.value = ''
   if (res.data.message === '新增评论成功') {
     console.log('新增评论成功')
+    detailInfo.value!.comment_count++
     if (atContent.value === '请输入消息') {
       let res1 = await getCommentService({ id: route.query.id as string })
       commentFirstArr.value = res1.data.data
@@ -183,11 +179,8 @@ const delPost = () => {
     message: '确定要删除这个帖子吗？'
   })
     .then(async () => {
-      // on confirm
-      let res = await delPostService({ id: route.query.id as string })
-      if (res.data.message === '删除帖子成功') {
-        router.back()
-      }
+      await delPostService({ id: route.query.id as string })
+      router.back()
     })
     .catch(() => {
       // on cancel
@@ -209,6 +202,7 @@ onMounted(async () => {
   } else {
     swipeHeight.value = 500
   }
+  isImgLoadingEnd.value = true
 })
 </script>
 <style lang="scss" scoped>
@@ -276,9 +270,9 @@ onMounted(async () => {
   .custom-indicator {
     position: absolute;
     right: 10px;
-    top: 3px;
-    padding: 2px 6px;
-    font-size: 15px;
+    top: 4px;
+    padding: 1px 4.5px;
+    font-size: 14px;
     border-radius: 9px;
     color: #f5f5f5;
     background: rgba(0, 0, 0, 0.4);

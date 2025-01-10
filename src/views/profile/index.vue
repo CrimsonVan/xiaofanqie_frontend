@@ -11,6 +11,7 @@
       <div class="btn">+</div>
     </van-uploader>
   </div>
+
   <div class="edit-item">
     <div class="title">名字</div>
     <div class="content">{{ useStore.userInfo.nick_name }}</div>
@@ -51,6 +52,10 @@
     <div class="content">中国-辽宁-白塔区</div>
     <van-icon name="arrow" />
   </div>
+  <div style="width: 100%; height: 100px; background-color: palegoldenrod">
+    <!-- <ImgCutter :imgMove="true" :boxWidth="300" @cutDown="cutDown"></ImgCutter> -->
+    <!-- <vue-cropper :src="useStore.userInfo.avatar"> </vue-cropper> -->
+  </div>
   <van-popup class="popup" v-model:show="showText" position="bottom">
     <div class="textTop">
       <span @click="() => (showText = false)">取消</span>
@@ -87,7 +92,7 @@
   </van-popup>
 </template>
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useNumStore } from '@/stores'
 import { useRouter } from 'vue-router'
 import { compressFile } from '@/utils/compress'
@@ -95,8 +100,10 @@ import {
   userUpdateAvatarService,
   userUpdateNicknameService,
   userUpdateSignatureService,
-  userUpdateBirthdayService
+  userUpdateBirthdayService,
+  userTestService
 } from '@/api/user'
+import { getNowFormatDate } from '@/utils/data'
 const useStore = useNumStore()
 const currentDate = ref(['2021', '01', '01'])
 const minDate = new Date(1970, 1, 1)
@@ -112,7 +119,6 @@ const goback = () => {
   router.back()
 }
 const hearderText = ref('')
-
 const showText = ref(false)
 const title = ref('')
 const placeholderText = ref('')
@@ -149,6 +155,7 @@ const goChange = (type: string) => {
   }
   showText.value = true
 }
+
 const warnText = ref('')
 const changeProfile = async () => {
   if (hearderText.value === '名字') {
@@ -213,6 +220,17 @@ watch(
     }
   }
 )
+onMounted(async () => {
+  let res = await userTestService({
+    username: '13114209344',
+    cate_id: undefined,
+    status: '通过',
+    id: undefined,
+    pagenum: 1
+  })
+  console.log('测试', res.data.data)
+  console.log('时间', getNowFormatDate())
+})
 </script>
 <style lang="scss" scoped>
 ::v-deep(.van-nav-bar__left) {

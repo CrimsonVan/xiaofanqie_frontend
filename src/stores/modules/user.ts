@@ -4,7 +4,8 @@ import {
   userGetInfoService,
   userGetFollowService,
   userAddFollowService,
-  userDelFollowService
+  userDelFollowService,
+  userGetFansService
 } from '@/api/user'
 import type { followResponseData, userInfoDataAllRes } from '@/type/user'
 export const useNumStore = defineStore(
@@ -58,6 +59,7 @@ export const useNumStore = defineStore(
       console.log('打印add关注后的res', res)
       await getFollows()
     }
+
     const delFollows = async ({ username, followUsername }: any) => {
       const res: any = await userDelFollowService({
         username: username,
@@ -66,6 +68,17 @@ export const useNumStore = defineStore(
       console.log('打印del关注后的res', res)
       await getFollows()
     }
+    //粉丝列表
+    const fans = ref<any>([])
+    const fansLength = computed(() => fans.value.length)
+    const getFans = async () => {
+      const res: any = await userGetFansService({
+        username: userInfo.value!.username
+      })
+      fans.value = res.data.data
+      console.log('获取粉丝列表', res.data.data)
+    }
+
     return {
       num,
       changeNum,
@@ -84,7 +97,10 @@ export const useNumStore = defineStore(
       followsLength,
       getFollows,
       addFollows,
-      delFollows
+      delFollows,
+      fans,
+      fansLength,
+      getFans
     }
   },
   {

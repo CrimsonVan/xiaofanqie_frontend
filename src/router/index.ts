@@ -63,6 +63,14 @@ const router = createRouter({
       }
     },
     {
+      path: '/fans',
+      component: () => import('../views/fans/index.vue'),
+      name: 'fans',
+      meta: {
+        keepAlive: false //设置页面是否需要使用缓存
+      }
+    },
+    {
       path: '/search',
       component: () => import('../views/search/index.vue'),
       name: 'Search',

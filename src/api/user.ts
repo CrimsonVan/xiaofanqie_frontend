@@ -31,6 +31,9 @@ export const userUpdateSignatureService = ({ signature, username }: userQuery) =
 //修改用户生日
 export const userUpdateBirthdayService = ({ birthday, username }: userQuery) =>
   request.post<any>('/my/birthdayUpdate', { birthday, username })
+//测试获取用户信息
+export const userTestGetService = ({ username }: any) =>
+  request.post<any>('/my/getTest', { username })
 
 //关注
 //获取用户关注列表
@@ -41,3 +44,11 @@ export const userAddFollowService = (obj: followQuery) => request.post<any>('/ap
 //删除关注用户
 export const userDelFollowService = ({ username, followUsername }: followQuery) =>
   request.post<any>('/api/delFollows', { username, followUsername })
+
+//粉丝
+//获取粉丝列表
+export const userGetFansService = ({ username }: any) =>
+  request.post<any, userInfoDataAllRes>('/api/getFans', { username })
+
+//Test
+export const userTestService = (obj: any) => request.post<any, any>('/my/getDataCount', obj)

@@ -19,20 +19,36 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useNumStore } from '@/stores'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { deepClone1 } from '@/utils/deepClone'
 import followButton from '@/components/followButton.vue'
+import { userGetFollowService } from '@/api/user'
 const useStore = useNumStore()
 const router = useRouter()
-const followArr = ref<any>(deepClone1(useStore.follows))
+const route = useRoute()
+const followArr = ref<any>([])
 const goback = () => {
   router.back()
 }
+
 const goDetail = (username: string) => {
-  router.push(`/other?username=${username}`)
+  if (username === useStore.userInfo.username) {
+    router.push(`/myself`)
+  } else {
+    router.push(`/other?username=${username}`)
+  }
 }
+onMounted(async () => {
+  if (route.query.type === 'myself') {
+    followArr.value = deepClone1(useStore.follows)
+  } else {
+    let res = await userGetFollowService({ username: route.query.username as string })
+    console.log('打印other的关注列表', res.data.data)
+    followArr.value = res.data.data
+  }
+})
 </script>
 <style lang="scss" scoped>
 ::v-deep(.van-nav-bar__left) {

@@ -5,7 +5,8 @@ import router from './router'
 import { Toast } from 'vant'
 import 'vant/es/toast/style'
 import 'vant/es/dialog/style'
-
+import 'vant/es/notify/style'
+import 'normalize.css/normalize.css'
 const app = createApp(App)
 
 app.use(pinia)
