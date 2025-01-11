@@ -99,48 +99,42 @@ const selectCate = async (index: number, item: cateData) => {
 }
 // 触底函数
 async function onBottom() {
-  console.log('正在监听scroll')
-
   // 获取可视高度
   let clientHeight = document.documentElement.clientHeight
-  // console.log('打印高度', clientHeight)
-
   // 获取滚动高度
   let scrollTop = document.documentElement.scrollTop
-
   // 滚动条高度
   let scrollHeight = document.documentElement.scrollHeight
   if (clientHeight + scrollTop >= scrollHeight - 170 && !isDataEnd.value && !isLoading.value) {
     reqQuery.value.pagenum++
     isLoading.value = true
-    console.log('开始加载数据')
     let res: postAllDataRes = await getPostService(reqQuery.value)
     isLoading.value = false
-    console.log('打印数据长度', res.data.data.length)
     if (res.data.data.length < 8) {
       isDataEnd.value = true
     }
     waterfallList.value = [...waterfallList.value, ...res.data.data]
   }
 }
-// 将触底函数节流化并用scroll监听完成触发
+// 将触底函数节流
 let throttledScroll = throttle(onBottom, 300)
-window.addEventListener('scroll', throttledScroll)
 
 onMounted(async () => {
+  //监听滚动
+  document.addEventListener('scroll', throttledScroll)
+  // 获取分类列表
   let result: cateAllDataRes = await getPostCateService(reqQuery.value)
-  console.log('打印分类列表', result.data.data)
   result.data.data.unshift({
     cate_name: '推荐'
   })
   cateList.value = result.data.data
+  //获取贴子列表
   let res: postAllDataRes = await getPostService(reqQuery.value)
-  console.log('打印数据', res.data.data)
   waterfallList.value = res.data.data
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', throttledScroll)
+  document.removeEventListener('scroll', throttledScroll)
 })
 </script>
 <style lang="scss" scoped>

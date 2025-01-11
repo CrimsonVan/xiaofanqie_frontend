@@ -31,7 +31,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, onUnmounted } from 'vue'
 import { getFollowPostService } from '@/api/post'
 import { useNumStore } from '@/stores'
 import { useRouter } from 'vue-router'
@@ -46,8 +46,6 @@ const isLoading = ref<boolean>(false) //是否在加载数据
 
 // 触底函数
 async function onBottom() {
-  console.log('正在监听scroll')
-
   // 获取可视高度
   let clientHeight = document.documentElement.clientHeight
   // console.log('打印高度', clientHeight)
@@ -65,7 +63,6 @@ async function onBottom() {
       pagenum: pagenum.value
     })
     isLoading.value = false
-    console.log('打印数据长度', res.data.data.length)
     if (res.data.data.length < 5) {
       isDataEnd.value = true
     }
@@ -84,6 +81,9 @@ onMounted(async () => {
     pagenum: pagenum.value
   })
   followPostArr.value = res.data.data
+})
+onUnmounted(() => {
+  document.removeEventListener('scroll', onBottom)
 })
 </script>
 <style lang="scss" scoped>

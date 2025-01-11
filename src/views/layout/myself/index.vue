@@ -77,7 +77,7 @@
 <script lang="ts" setup>
 import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { getUserPostService } from '@/api/post'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
@@ -148,6 +148,9 @@ onMounted(async () => {
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
     myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight
+})
+onUnmounted(() => {
+  document.removeEventListener('scroll', onBottom)
 })
 </script>
 
