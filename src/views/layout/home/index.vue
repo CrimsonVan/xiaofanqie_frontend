@@ -8,16 +8,18 @@
     </template>
   </van-nav-bar>
   <div class="safeTop"></div>
-  <div class="scroll-nav">
-    <span
+  <div class="scroll-nav" ref="cate_recommend_area_dom">
+    <div
       class="scroll-nav-item"
       v-for="(item, index) in cateList"
       :class="index === activeCateIndex ? 'active' : ''"
       :key="index"
       @click="selectCate(index, item)"
-      >{{ item.cate_name }}</span
     >
+      {{ item.cate_name }}
+    </div>
   </div>
+
   <Waterfall
     :delay="5"
     :posDuration="10"
@@ -56,18 +58,22 @@ import type { postAllDataRes, postData } from '@/type/post'
 import type { cateAllDataRes, cateData } from '@/type/cate'
 const router = useRouter()
 const lazt = ref<boolean>(true)
-// const pagenum = ref<number>(1) //当前页数
 const isDataEnd = ref<boolean>(false) //是否所有数据加载完毕
 const isLoading = ref<boolean>(false) //是否在加载数据
+const isDataEnd2 = ref<boolean>(false) //是否所有数据加载完毕
+const isLoading2 = ref<boolean>(false) //是否在加载数据
 const waterfallList = ref<postData[]>([]) //瀑布流数据
 const cateList = ref<cateData[]>([]) //帖子分类列表
 const activeCateIndex = ref<number>(0) //当前选中分类
+const cate_recommend_area_dom = ref<any>(null) //分类列表dom
+const curCatesPagenum = ref<number>(1)
 const reqQuery = ref<{
   pagenum: number
   cate_id?: number
 }>({
   pagenum: 1
 })
+//瀑布流参数
 const breakpoints = ref<any>({
   3000: {
     //当屏幕宽度小于等于3000
@@ -87,10 +93,10 @@ const breakpoints = ref<any>({
     rowPerView: 2
   }
 })
+//选择分类
 const selectCate = async (index: number, item: cateData) => {
   activeCateIndex.value = index
   reqQuery.value.cate_id = item.cate_id
-  console.log('打印cateid', item.cate_id)
   reqQuery.value.pagenum = 1
   isDataEnd.value = false //是否所有数据加载完毕
   isLoading.value = false //是否在加载数据
@@ -118,7 +124,25 @@ async function onBottom() {
 }
 // 将触底函数节流
 let throttledScroll = throttle(onBottom, 300)
+//滚动监听触发函数
+const cateScroll = async () => {
+  if (
+    cate_recommend_area_dom.value.clientWidth + cate_recommend_area_dom.value.scrollLeft >=
+      cate_recommend_area_dom.value.scrollWidth - 50 &&
+    !isDataEnd2.value &&
+    !isLoading2.value
+  ) {
+    curCatesPagenum.value++
+    isLoading2.value = true
 
+    let res: cateAllDataRes = await getPostCateService({ pagenum: curCatesPagenum.value })
+    cateList.value = [...cateList.value, ...res.data.data]
+    if (res.data.data.length < 8) {
+      isDataEnd2.value = true
+    }
+    isLoading2.value = false
+  }
+}
 onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', throttledScroll)
@@ -128,6 +152,7 @@ onMounted(async () => {
     cate_name: '推荐'
   })
   cateList.value = result.data.data
+  cate_recommend_area_dom.value.addEventListener('scroll', cateScroll)
   //获取贴子列表
   let res: postAllDataRes = await getPostService(reqQuery.value)
   waterfallList.value = res.data.data
@@ -141,27 +166,30 @@ onUnmounted(() => {
 .safeTop {
   width: 100%;
   background-color: #f5f5f5;
-  height: 46px;
+  height: 75px;
 }
+
 .scroll-nav {
+  z-index: 999;
+  position: fixed;
+  top: 46px;
+  right: 0;
   width: 100%;
-  height: 28px;
-  line-height: 28px;
-  // background-color: pink;
+  height: 29px;
+  background-color: #fff;
   -webkit-overflow-scrolling: touch;
-  white-space: nowrap;
   overflow-x: scroll;
+  white-space: nowrap;
   overflow-y: hidden;
+  display: flex;
   &::-webkit-scrollbar {
     height: 0;
   }
   .scroll-nav-item {
     margin-left: 10px;
     font-size: 15px;
-    padding: 5px 9px;
-
-    border-radius: 10px;
-
+    padding: 5px 10px;
+    border-radius: 12px;
     &:last-child {
       margin-right: 10px;
     }
