@@ -139,10 +139,12 @@ const onBottom = () => {
 }
 
 onMounted(async () => {
+  //监听滚动
   document.addEventListener('scroll', onBottom)
+  //获取对方用户信息
   let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
-
-  waterfallArr.value = res.data.data
+  waterfallArr.value = res.data.data.reverse()
+  //获取滚动显示所需的滚动高度
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
     myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight

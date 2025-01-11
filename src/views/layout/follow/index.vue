@@ -31,7 +31,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { onMounted, ref, onDeactivated, onActivated } from 'vue'
+import { onMounted, ref } from 'vue'
 import { getFollowPostService } from '@/api/post'
 import { useNumStore } from '@/stores'
 import { useRouter } from 'vue-router'
@@ -39,7 +39,7 @@ import type { postAllDataRes, postData } from '@/type/post'
 import { throttle } from '@/utils/throttle'
 const useStore = useNumStore()
 const router = useRouter()
-const followPostArr = ref<postData[]>([])
+const followPostArr = ref<postData[]>([]) //帖子列表
 const pagenum = ref<number>(1) //当前页数
 const isDataEnd = ref<boolean>(false) //是否所有数据加载完毕
 const isLoading = ref<boolean>(false) //是否在加载数据
@@ -60,7 +60,6 @@ async function onBottom() {
   if (clientHeight + scrollTop >= scrollHeight - 170 && !isDataEnd.value && !isLoading.value) {
     pagenum.value++
     isLoading.value = true
-    console.log('开始加载数据')
     let res: postAllDataRes = await getFollowPostService({
       username: useStore.userInfo.username,
       pagenum: pagenum.value
@@ -77,21 +76,14 @@ async function onBottom() {
 let throttledScroll = throttle(onBottom, 600)
 // window.addEventListener('scroll', throttledScroll)
 onMounted(async () => {
+  //监听滚动
+  document.addEventListener('scroll', throttledScroll)
+  //获取帖子
   let res: postAllDataRes = await getFollowPostService({
     username: useStore.userInfo.username,
     pagenum: pagenum.value
   })
   followPostArr.value = res.data.data
-  console.log('获取关注列表', res.data.data)
-})
-onActivated(() => {
-  window.addEventListener('scroll', throttledScroll)
-  console.log('keep-alive激活了')
-  // window.removeEventListener('scroll', throttledScroll)
-})
-onDeactivated(() => {
-  console.log('keep-alive失活了')
-  window.removeEventListener('scroll', throttledScroll)
 })
 </script>
 <style lang="scss" scoped>

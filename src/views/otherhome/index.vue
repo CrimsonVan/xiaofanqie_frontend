@@ -100,7 +100,7 @@ import type { postData, postAllDataRes } from '@/type/post'
 const useStore = useNumStore()
 const route = useRoute()
 const router = useRouter()
-const otherInfo = ref<userInfoData>()
+const otherInfo = ref<userInfoData>() //对方主页个人信息
 const navAvatarShowHeight = ref<number>() //导航栏显示头像所需滚动高度
 const whiteTitleFixedHeight = ref<number>() //笔记固定所需的滚动的高度
 const navTopDom = ref<any>(null) //头部导航的dom
@@ -156,7 +156,7 @@ onMounted(async () => {
   otherInfo.value = res.data.data
   //获取对方帖子
   let res1: postAllDataRes = await getUserPostService({ username: route.query.username as string })
-  waterfallList.value = res1.data.data.filter((item) => item.status !== '未通过')
+  waterfallList.value = res1.data.data.filter((item) => item.status !== '未通过').reverse()
   //获取滚动显示所需的滚动高度
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
