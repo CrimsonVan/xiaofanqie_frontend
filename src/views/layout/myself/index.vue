@@ -77,7 +77,7 @@
 <script lang="ts" setup>
 import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { getUserPostService } from '@/api/post'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
@@ -100,10 +100,7 @@ const showLeft = ref<boolean>(false) //是否显示左边抽屉
 const logout = () => {
   socket.emit('logout', useStore.userInfo.username)
   useStore.clearToken()
-  showLeft.value = false
-  nextTick(() => {
-    router.push('/login')
-  })
+  router.push('/login')
 }
 //瀑布流参数设置
 const breakpoints = ref({
@@ -144,6 +141,7 @@ const onBottom = () => {
 onMounted(async () => {
   document.addEventListener('scroll', onBottom)
   let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
+
   waterfallArr.value = res.data.data
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =

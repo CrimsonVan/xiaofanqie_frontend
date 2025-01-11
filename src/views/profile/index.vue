@@ -5,12 +5,14 @@
     </template>
   </van-nav-bar>
   <div class="safeTop"></div>
+  <!-- 头像 -->
   <div class="editAvatar">
     <van-uploader :after-read="afterRead">
       <img class="img" :src="useStore.userInfo.avatar" alt="" />
       <div class="btn">+</div>
     </van-uploader>
   </div>
+  <!-- 名字 -->
   <div class="edit-item">
     <div class="title">名字</div>
     <div class="content">{{ useStore.userInfo.nick_name }}</div>

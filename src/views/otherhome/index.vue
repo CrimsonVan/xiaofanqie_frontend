@@ -147,13 +147,17 @@ const onBottom = () => {
   }
 }
 onMounted(async () => {
+  //监听滚动
   document.addEventListener('scroll', onBottom)
+  //获取对方用户信息
   let res: userInfoDataAllRes = await userGetInfoService({
     username: route.query.username as string
   })
   otherInfo.value = res.data.data
+  //获取对方帖子
   let res1: postAllDataRes = await getUserPostService({ username: route.query.username as string })
-  waterfallList.value = res1.data.data
+  waterfallList.value = res1.data.data.filter((item) => item.status !== '未通过')
+  //获取滚动显示所需的滚动高度
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
     myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight

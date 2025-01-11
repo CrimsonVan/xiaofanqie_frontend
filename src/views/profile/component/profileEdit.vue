@@ -59,7 +59,7 @@ const placeholderText = ref<string>('') //placeholder文字
 const warnText = ref<string>('') //提示词
 const isShowBirth = ref(false) //是否选择生日日期
 
-//编辑个人信息
+//开始编辑个人信息
 const openEditProfile = (type: string) => {
   if (type === '名字') {
     inpVal.value = useStore.userInfo.nick_name
