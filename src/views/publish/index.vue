@@ -1,20 +1,23 @@
 <template>
+  <!-- 顶部导航 -->
   <div class="nav-top">
-    <van-icon @click="goback" name="arrow-left" />
+    <van-icon @click="() => router.back()" name="arrow-left" />
   </div>
+  <!-- 顶部安全区域 -->
   <div class="safetop"></div>
   <div>
+    <!-- 头像上传 -->
     <van-uploader
       class="upload"
       v-model="fileList"
       :max-size="10000 * 1024"
       multiple
-      :max-count="9"
+      :max-count="3"
       :after-read="afterRead"
       @oversize="onOversize"
     />
   </div>
-
+  <!-- 标题输入栏 -->
   <van-field
     class="field"
     v-model="title"
@@ -23,6 +26,7 @@
     placeholder="添加标题"
     maxlength="20"
   />
+  <!-- 贴文输入栏 -->
   <van-field
     v-model="message"
     rows="9"
@@ -31,16 +35,23 @@
     maxlength="200"
     placeholder="请添加正文"
   />
+  <!-- 分类 -->
   <div class="cate_add_select">
     <div v-if="selectedCate" class="cate_select" @click="delCate">
       {{ selectedCate?.cate_name }} X
     </div>
-    <div v-if="!isEditCate" @click="addCate" class="cate_add">+标签</div>
-    <van-field ref="add_inp_ref" v-else class="addcate_inp" v-model="addCateVal" @blur="addDone" />
+    <div v-if="!isAddCate" @click="startAddCate" class="cate_add">+标签</div>
+    <van-field
+      ref="add_inp_ref"
+      v-if="isAddCate"
+      class="addcate_inp"
+      v-model="addCateVal"
+      @blur="addCateHandle"
+    />
   </div>
   <div class="cate_recommend">
     <div class="cate_recommend_title">推荐标签:</div>
-    <div class="cate_recommend_area">
+    <div class="cate_recommend_area" ref="cate_recommend_area_dom">
       <div
         @click="selectCate(item)"
         class="cate_recommend_item"
@@ -49,23 +60,23 @@
       >
         {{ item.cate_name }}
       </div>
-      <div class="cate_recommend_item" v-for="(item, index) in cateList" :key="index">
-        {{ item.cate_name }}
-      </div>
     </div>
   </div>
+  <!-- 底部按钮 -->
   <div class="bottom-input">
     <van-icon name="like-o" />
     <van-icon name="star-o" />
     <van-icon name="star-o" />
     <van-button :disabled="isEmpty" @click="pubPost" round class="btn">发布帖子</van-button>
   </div>
+  <!-- 底部安全区域 -->
   <div class="safeBottom"></div>
 </template>
 <script lang="ts" setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { addPostService } from '@/api/post'
 import { getPostCateService, addPostCateService, getOnePostCateService } from '@/api/cate'
+import type { cateAllDataRes, cateData } from '@/type/cate'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import { showToast } from 'vant'
@@ -73,18 +84,19 @@ import { getNowFormatDate } from '@/utils/data'
 import { compressFile } from '@/utils/compress'
 const useStore = useNumStore()
 const router = useRouter()
-const fileList = ref<any>([])
-const cateList = ref<any>([])
-const selectedCate = ref<any>()
-const isEditCate = ref<any>(false)
-const add_inp_ref = ref<any>(null)
-const onOversize = () => {
-  showToast({
-    message: '文件大小不能超过 10mb',
-    position: 'top'
-  })
-}
-const addCateVal = ref<any>('')
+const message = ref<string>('') //贴文内容
+const title = ref<string>('') //贴文标题
+const fileList = ref<any>([]) //图片列表
+let formData = new FormData() // 上传所需的表单
+const cateList = ref<Array<cateData>>([]) //分类列表
+const selectedCate = ref<any>(null) //已选择的分类
+const isAddCate = ref<any>(false) //是否添加分类
+const add_inp_ref = ref<any>(null) //分类添加输入框dom
+const addCateVal = ref<string>('') //分类添加输入框的value
+const cate_recommend_area_dom = ref<any>(null) //分类列表dom
+const isDataEnd = ref<boolean>(false) //是否所有数据加载完毕
+const isLoading = ref<boolean>(false) //是否在加载数据
+const curPagenum = ref<number>(1) //当前页码
 //选择标签
 const selectCate = (item: any) => {
   selectedCate.value = item
@@ -93,80 +105,66 @@ const selectCate = (item: any) => {
 const delCate = () => {
   selectedCate.value = null
 }
-//点击添加标签
-const addCate = () => {
+//显示添加标签的输入框
+const startAddCate = () => {
   addCateVal.value = ''
-  isEditCate.value = true
+  isAddCate.value = true
   nextTick(() => {
     add_inp_ref.value.focus()
   })
 }
-//发送标签添加请求
-const addDone = async () => {
-  isEditCate.value = false
-  if (addCateVal.value === '' || addCateVal.value === null) {
-    console.log('不能为空')
+//标签添加
+const addCateHandle = async () => {
+  isAddCate.value = false
+  if (addCateVal.value === '') {
     return
   }
 
-  console.log('打印新增cate', addCateVal.value)
   await addPostCateService({
     cate_name: addCateVal.value,
     creater: useStore.userInfo.nick_name,
     creater_username: useStore.userInfo.username,
     creater_avatar: useStore.userInfo.avatar
   })
+
   let res = await getOnePostCateService({
     cate_name: addCateVal.value
   })
-  console.log('获取新增的分类', res.data.data)
+
   cateList.value.unshift(res.data.data)
 }
-// 创建一个空对象实例
-let formData = new FormData()
-const goback = () => {
-  router.back()
-  if (fileList.value.length === 0) {
-    console.log('图片不能为空')
-    return
-  } else {
-    console.log('打印filelist', fileList.value[0].file)
-  }
+//图片上传数量太多的回调
+const onOversize = () => {
+  showToast({
+    message: '文件大小不能超过 10mb',
+    position: 'top'
+  })
 }
-const message = ref('')
-const title = ref('')
-//照片上传事件方法
+//照片上传后的回调
 const afterRead = async (file: any) => {
-  // 调用append()方法添加数据
-  console.log('打印压缩前file', file)
-  // comPressImage()
   if (file instanceof Array) {
-    console.log('多图片上传')
     file.forEach(async (item, index) => {
       let res = await compressFile(item.file)
-      // console.log('打印压缩后的图片', res)
       fileList.value[index].file = res
     })
   } else {
-    console.log('单图片上传')
     let res = await compressFile(file.file)
-    console.log('打印压缩后file', res)
     fileList.value[fileList.value.length - 1].file = res
   }
 }
+//判断上传文章是否为空
 const isEmpty = computed(
   () => title.value === '' || message.value === '' || fileList.value.length === 0
 )
+//向后端上传贴文
 const pubPost = async () => {
   formData.append('title', title.value)
   formData.append('content', message.value)
   formData.append('username', useStore.userInfo.username)
   formData.append('nick_name', useStore.userInfo.nick_name)
   formData.append('avatar', useStore.userInfo.avatar)
-  formData.append('cate_id', selectedCate.value.cate_id)
+  formData.append('cate_id', selectedCate.value ? selectedCate.value.cate_id : 0)
   formData.append('pub_time', getNowFormatDate())
-  console.log('压缩后的fileList', fileList.value)
-
   fileList.value.forEach((item: any) => {
     formData.append('cover_img', item.file)
   })
@@ -176,9 +174,29 @@ const pubPost = async () => {
     router.push('/home')
   }
 }
+//滚动监听触发函数
+const cateScroll = async () => {
+  if (
+    cate_recommend_area_dom.value.clientWidth + cate_recommend_area_dom.value.scrollLeft >=
+      cate_recommend_area_dom.value.scrollWidth &&
+    !isDataEnd.value &&
+    !isLoading.value
+  ) {
+    curPagenum.value++
+    isLoading.value = true
+
+    let res: cateAllDataRes = await getPostCateService({ pagenum: curPagenum.value })
+    cateList.value = [...cateList.value, ...res.data.data]
+    if (res.data.data.length < 8) {
+      isDataEnd.value = true
+    }
+    isLoading.value = false
+  }
+}
 onMounted(async () => {
-  let res = await getPostCateService({ pagenum: 1 })
+  let res: cateAllDataRes = await getPostCateService({ pagenum: curPagenum.value })
   cateList.value = res.data.data
+  cate_recommend_area_dom.value.addEventListener('scroll', cateScroll)
 })
 </script>
 <style lang="scss" scoped>
@@ -257,7 +275,6 @@ onMounted(async () => {
   font-weight: 600;
   .cate_recommend_title {
     width: 18%;
-    // background-color: salmon;
   }
   .cate_recommend_area {
     width: 82%;
@@ -265,6 +282,7 @@ onMounted(async () => {
     white-space: nowrap;
     overflow-y: hidden;
     display: flex;
+    background-color: cornsilk;
     &::-webkit-scrollbar {
       height: 0;
     }

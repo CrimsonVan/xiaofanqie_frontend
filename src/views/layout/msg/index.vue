@@ -24,7 +24,7 @@
     </div>
     <div class="chat-to-data">
       <span>10-28</span>
-      <van-icon name="minus" badge="2" color="#ffffff" />
+      <van-icon name="minus" color="#ffffff" />
     </div>
   </div>
   <!-- 下面弹出 -->

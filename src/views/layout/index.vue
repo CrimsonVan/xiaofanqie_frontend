@@ -9,7 +9,7 @@
         <van-button class="plus" icon="plus" />
       </template>
     </van-tabbar-item>
-    <van-tabbar-item to="/msg" icon="friends-o" badge="3">消息</van-tabbar-item>
+    <van-tabbar-item to="/msg" icon="friends-o">消息</van-tabbar-item>
     <van-tabbar-item to="/myself" icon="setting-o">我</van-tabbar-item>
   </van-tabbar>
 </template>

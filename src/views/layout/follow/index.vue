@@ -71,7 +71,7 @@ async function onBottom() {
 }
 // 将触底函数节流化并用scroll监听完成触发
 let throttledScroll = throttle(onBottom, 600)
-// window.addEventListener('scroll', throttledScroll)
+
 onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', throttledScroll)
@@ -82,6 +82,7 @@ onMounted(async () => {
   })
   followPostArr.value = res.data.data
 })
+
 onUnmounted(() => {
   document.removeEventListener('scroll', onBottom)
 })
