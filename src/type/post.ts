@@ -13,6 +13,8 @@ export type postData = {
   comment_count: number
   comment_num?: number
   status: string
+  cate_id: number
+  cate_name?: string
 }
 //单个帖子返回数据类型
 export type postOneDataRes = GlobalResponseData<postData>

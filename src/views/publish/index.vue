@@ -67,23 +67,28 @@
     <van-icon name="like-o" />
     <van-icon name="star-o" />
     <van-icon name="star-o" />
-    <van-button :disabled="isEmpty" @click="pubPost" round class="btn">发布帖子</van-button>
+    <van-button v-if="route.query.id" :disabled="isEmpty" @click="pubPost" round class="btn"
+      >完成编辑</van-button
+    >
+    <van-button v-else :disabled="isEmpty" @click="pubPost" round class="btn">发布帖子</van-button>
   </div>
   <!-- 底部安全区域 -->
   <div class="safeBottom"></div>
 </template>
 <script lang="ts" setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { addPostService } from '@/api/post'
+import { addPostService, getEditOneService, editPostService } from '@/api/post'
+import type { postOneDataRes } from '@/type/post'
 import { getPostCateService, addPostCateService, getOnePostCateService } from '@/api/cate'
 import type { cateAllDataRes, cateData } from '@/type/cate'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useNumStore } from '@/stores'
 import { showToast } from 'vant'
 import { getNowFormatDate } from '@/utils/data'
 import { compressFile } from '@/utils/compress'
 const useStore = useNumStore()
 const router = useRouter()
+const route = useRoute()
 const message = ref<string>('') //贴文内容
 const title = ref<string>('') //贴文标题
 const fileList = ref<any>([]) //图片列表
@@ -145,7 +150,7 @@ const afterRead = async (file: any) => {
   if (file instanceof Array) {
     file.forEach(async (item, index) => {
       let res = await compressFile(item.file)
-      fileList.value[index].file = res
+      fileList.value[index + fileList.value.length - file.length].file = res
     })
   } else {
     let res = await compressFile(file.file)
@@ -158,19 +163,38 @@ const isEmpty = computed(
 )
 //向后端上传贴文
 const pubPost = async () => {
-  formData.append('title', title.value)
-  formData.append('content', message.value)
-  formData.append('username', useStore.userInfo.username)
-  formData.append('nick_name', useStore.userInfo.nick_name)
-  formData.append('avatar', useStore.userInfo.avatar)
-  formData.append('cate_id', selectedCate.value ? selectedCate.value.cate_id : 0)
-  formData.append('pub_time', getNowFormatDate())
-  fileList.value.forEach((item: any) => {
-    formData.append('cover_img', item.file)
-  })
-  let res: any = await addPostService(formData)
-  if (res.data.message === '新增帖子成功') {
-    console.log('打印上传', res.data)
+  if (route.query.id) {
+    // 编辑贴文
+    formData.append('id', route.query.id as string)
+    fileList.value.forEach((item: any) => {
+      if (item.file) {
+        formData.append('cover_img', item.file)
+      } else {
+        if (formData.has('content_img')) {
+          formData.set('content_img', formData.get('content_img') + ',' + item.objectUrl)
+        } else {
+          formData.append('content_img', item.objectUrl)
+        }
+      }
+    })
+    formData.append('title', title.value)
+    formData.append('content', message.value)
+    formData.append('cate_id', selectedCate.value ? selectedCate.value.cate_id : 0)
+    await editPostService(formData)
+    router.push('/home')
+  } else {
+    // 发布贴文
+    formData.append('title', title.value)
+    formData.append('content', message.value)
+    formData.append('username', useStore.userInfo.username)
+    formData.append('nick_name', useStore.userInfo.nick_name)
+    formData.append('avatar', useStore.userInfo.avatar)
+    formData.append('cate_id', selectedCate.value ? selectedCate.value.cate_id : 0)
+    formData.append('pub_time', getNowFormatDate())
+    fileList.value.forEach((item: any) => {
+      formData.append('cover_img', item.file)
+    })
+    await addPostService(formData)
     router.push('/home')
   }
 }
@@ -178,7 +202,7 @@ const pubPost = async () => {
 const cateScroll = async () => {
   if (
     cate_recommend_area_dom.value.clientWidth + cate_recommend_area_dom.value.scrollLeft >=
-      cate_recommend_area_dom.value.scrollWidth &&
+      cate_recommend_area_dom.value.scrollWidth - 35 &&
     !isDataEnd.value &&
     !isLoading.value
   ) {
@@ -194,6 +218,25 @@ const cateScroll = async () => {
   }
 }
 onMounted(async () => {
+  if (route.query.id) {
+    let res: postOneDataRes = await getEditOneService({ id: route.query.id as string })
+    // 图片回显
+    fileList.value = res.data.data.content_img.split(',').map((item) => {
+      return {
+        objectUrl: item,
+        isImage: true
+      }
+    })
+    //标题回显
+    title.value = res.data.data.title
+    //内容回显
+    message.value = res.data.data.content
+    //分类标签回显
+    selectedCate.value = {
+      cate_name: res.data.data.cate_name,
+      cate_id: res.data.data.cate_id
+    }
+  }
   let res: cateAllDataRes = await getPostCateService({ pagenum: curPagenum.value })
   cateList.value = res.data.data
   cate_recommend_area_dom.value.addEventListener('scroll', cateScroll)
@@ -282,9 +325,8 @@ onMounted(async () => {
     white-space: nowrap;
     overflow-y: hidden;
     display: flex;
-    background-color: cornsilk;
     &::-webkit-scrollbar {
-      height: 0;
+      display: none;
     }
     .cate_recommend_item {
       color: #f2868b;

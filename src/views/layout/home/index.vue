@@ -19,7 +19,6 @@
       {{ item.cate_name }}
     </div>
   </div>
-
   <Waterfall
     :delay="5"
     :posDuration="10"
@@ -134,7 +133,6 @@ const cateScroll = async () => {
   ) {
     curCatesPagenum.value++
     isLoading2.value = true
-
     let res: cateAllDataRes = await getPostCateService({ pagenum: curCatesPagenum.value })
     cateList.value = [...cateList.value, ...res.data.data]
     if (res.data.data.length < 8) {
@@ -152,6 +150,8 @@ onMounted(async () => {
     cate_name: '推荐'
   })
   cateList.value = result.data.data
+  console.log('打印分类列表', cateList.value)
+
   cate_recommend_area_dom.value.addEventListener('scroll', cateScroll)
   //获取贴子列表
   let res: postAllDataRes = await getPostService(reqQuery.value)
@@ -166,30 +166,33 @@ onUnmounted(() => {
 .safeTop {
   width: 100%;
   background-color: #f5f5f5;
-  height: 75px;
+  height: 81px;
 }
-
 .scroll-nav {
   z-index: 999;
   position: fixed;
   top: 46px;
   right: 0;
   width: 100%;
-  height: 29px;
+  height: 35px;
   background-color: #fff;
-  -webkit-overflow-scrolling: touch;
   overflow-x: scroll;
   white-space: nowrap;
   overflow-y: hidden;
   display: flex;
+  align-items: center;
   &::-webkit-scrollbar {
-    height: 0;
+    display: none;
   }
   .scroll-nav-item {
     margin-left: 10px;
     font-size: 15px;
-    padding: 5px 10px;
-    border-radius: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 27px;
+    border-radius: 10px;
+    line-height: 27px;
+    text-align: center;
     &:last-child {
       margin-right: 10px;
     }

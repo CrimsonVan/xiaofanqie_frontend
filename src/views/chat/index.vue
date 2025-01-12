@@ -9,7 +9,8 @@
       <van-icon name="share-o" />
     </template>
   </van-nav-bar>
-  <div class="chatArea">
+  <div class="safe1"></div>
+  <div class="chatArea" ref="chatAreaDom">
     <div class="chat-msg-item-left" v-for="item in msgArr" :key="item.id">
       <!-- 本人发的消息 -->
       <div v-if="useStore.userInfo.username === item.fromUsername" class="msgBox">
@@ -28,6 +29,7 @@
     </div>
   </div>
   <div v-if="showEmoji" class="emoji-safeArea"></div>
+  <div class="safe2"></div>
   <div class="fixed-bottom">
     <div class="bottom-input">
       <van-icon name="volume-o" />
@@ -42,7 +44,6 @@
         @keydown="search2($event)"
       />
       <van-icon @click="showEmo" name="smile-o" />
-      <!-- <van-icon @click="sendMsg" name="add-o" /> -->
       <van-button :disabled="isMessageEmpty" class="send-btn" @click="sendMsg">发送</van-button>
     </div>
     <div v-if="showEmoji" class="bottom-emoji">
@@ -61,15 +62,18 @@ import socket from '@/utils/connectSocket'
 import { useNumStore } from '@/stores'
 import { getChatMsg } from '@/api/msg'
 import type { msgData, msgDataAllRes } from '@/type/msg'
+import { emojiArr } from './emoji'
 const useStore = useNumStore()
 const router = useRouter()
 const route = useRoute()
+const chatAreaDom = ref<any>(null)
 const msgArr = ref<msgData[]>([]) //聊天信息列表
 const message = ref<string>('') //输入栏消息
 const friendName = ref<string>('') //左上角好友名字
 const friendAvatar = ref<string>('') //左上角好友头像
 const friendUsername = ref<string>('') //左上角好友的用户名
-const isMessageEmpty = computed(() => message.value === '')
+const isMessageEmpty = computed(() => message.value === '') //判断输入框是否为空
+const showEmoji = ref<boolean>(false) //表情列表是否显示
 const testFocus = () => {
   console.log('focus了')
   showEmoji.value = false
@@ -77,28 +81,21 @@ const testFocus = () => {
     reachBottom()
   })
 }
-const emojiArr: Array<Array<string>> = [
-  ['😀', '🤡', '😂', '🤣', '😃', '😄', '😅', '😆'],
-  ['😉', '😊', '😋', '😎', '😍', '😘', '😗', '🙂'],
-  ['🤗', '🤔', '😐', '😑', '😶', '🙄', '😏', '😣'],
-  ['😥', '😮', '🤐', '😯', '😪', '😫', '😛', '😝'],
-  ['🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😨']
-]
 const search2 = (e: any) => {
   if (e.key === 'Enter') {
     console.log('Enter')
   }
 }
-const showEmoji = ref<boolean>(false)
+
 const onClickLeft = () => {
   router.back()
 }
+//像后端发送讯息
 const sendMsg = () => {
   if (message.value === '') {
-    console.log('输入内容不能为空')
     return
   }
-  // console.log('打印发送的信息', message.value)
+
   let sendObj: msgData = {
     fromUsername: useStore.userInfo.username,
     fromNickname: useStore.userInfo.nick_name,
@@ -110,14 +107,13 @@ const sendMsg = () => {
   }
 
   msgArr.value.push(sendObj)
+  socket.emit('msg', sendObj)
+  message.value = ''
   nextTick(() => {
     reachBottom()
   })
-  socket.emit('msg', sendObj)
-  message.value = ''
 }
 const getEmoji = (emo: string) => {
-  console.log('打印所选表情', emo)
   message.value = message.value + emo
 }
 const showEmo = () => {
@@ -137,10 +133,11 @@ socket.on('toOneMsg', (res: msgData) => {
 const goOther = () => {
   router.push(`/other?username=${friendUsername.value}`)
 }
-
+//触底操作
 function reachBottom() {
-  let scrollHeight = document.documentElement.scrollHeight
-  document.documentElement.scrollTop = scrollHeight
+  console.log('打印height', chatAreaDom.value.scrollHeight, chatAreaDom.value.clientHeight)
+
+  chatAreaDom.value.scrollTop = chatAreaDom.value.scrollHeight - chatAreaDom.value.clientHeight
 }
 
 onMounted(async () => {
@@ -190,17 +187,25 @@ onMounted(async () => {
 .van-safe-area-bottom {
   border-top: 1px solid #ccc;
 }
+.safe1 {
+  width: 100%;
+  height: 46px;
+}
 .chatArea {
-  min-height: 100vh;
   background-color: #f5f5f5;
   width: 100%;
-  padding: 46px 12px;
-
+  height: calc(100vh - 92px);
+  padding: 0 12px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  // &::-webkit-scrollbar {
+  //   display: none;
+  // }
   .chat-msg-item-left {
     width: 100%;
     min-height: 34px;
     margin: 16px 0;
-
     .msgBox {
       display: flex;
       align-items: flex-start;
@@ -242,7 +247,6 @@ onMounted(async () => {
       }
     }
   }
-
   .chat-msg-item-right {
     width: 100%;
     min-height: 34px;
@@ -270,7 +274,10 @@ onMounted(async () => {
     }
   }
 }
-
+.safe2 {
+  width: 100%;
+  height: 46px;
+}
 .emoji-safeArea {
   width: 100%;
   height: 210px;

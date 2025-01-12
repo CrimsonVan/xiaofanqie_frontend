@@ -79,7 +79,7 @@
         <div class="circle"><van-icon name="flower-o" /></div>
         <div class="bottom-pop-text">推广</div>
       </div>
-      <div class="bottom-pop-item">
+      <div class="bottom-pop-item" @click="() => router.push(`/publish?id=${detailInfo?.id}`)">
         <div class="circle"><van-icon name="edit" /></div>
         <div class="bottom-pop-text">编辑</div>
       </div>

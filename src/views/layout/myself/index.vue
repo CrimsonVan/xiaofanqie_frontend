@@ -17,7 +17,7 @@
       <img class="myself-top-avatar" :src="useStore.userInfo.avatar" alt="" />
       <div class="myself-top-name">
         <div>{{ useStore.userInfo.nick_name }}</div>
-        <div class="myself-top-username1">小红书号：xhs{{ useStore.userInfo.username }}</div>
+        <div class="myself-top-username1">小番茄号：xhs{{ useStore.userInfo.username }}</div>
         <div class="myself-top-username2">IP属地：北京</div>
       </div>
     </div>
