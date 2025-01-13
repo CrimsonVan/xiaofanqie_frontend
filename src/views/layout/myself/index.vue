@@ -7,7 +7,20 @@
       <van-icon name="ellipsis" />
     </div>
     <div class="whiteFixed" :class="[isWhite ? 'whiteFixed_active' : 'whiteFixed']">
-      <div class="whiteFixedNote">笔记</div>
+      <div class="whiteFixedNote">
+        <span
+          class="white-title-item"
+          :class="[curNav === '笔记' ? 'active' : '']"
+          @click="changeCurNav('笔记')"
+          >笔记</span
+        >
+        <span
+          class="white-title-item"
+          :class="[curNav === '赞过' ? 'active' : '']"
+          @click="changeCurNav('赞过')"
+          >赞过</span
+        >
+      </div>
     </div>
   </div>
   <!-- 主页信息 -->
@@ -24,21 +37,34 @@
     <div class="myself-bg-middle">{{ useStore.userInfo.signature }}</div>
     <div class="myself-bg-bottom">
       <div class="myself-bottom-num-part" @click="() => router.push('/follows?type=myself')">
-        <div class="myself-bottom-num">{{ useStore.followsLength }}</div>
+        <div class="myself-bottom-num">{{ useStore.userInfo.follows.length }}</div>
         <div class="myself-bottom-title">关注</div>
       </div>
       <div class="myself-bottom-num-part" @click="() => router.push('/fans?type=myself')">
-        <div class="myself-bottom-num">{{ useStore.fansLength }}</div>
+        <div class="myself-bottom-num">{{ useStore.userInfo.fans.length }}</div>
         <div class="myself-bottom-title">粉丝</div>
       </div>
       <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">4822</div>
-        <div class="myself-bottom-title">获赞</div>
+        <div class="myself-bottom-num">{{ useStore.userInfo.likes.length }}</div>
+        <div class="myself-bottom-title">赞过</div>
       </div>
       <van-button @click="() => router.push('/profile')" round class="btn">编辑资料</van-button>
       <van-button round icon="setting-o" type="primary" class="msg" />
     </div>
-    <div ref="whiteTitleDom" class="white-title">笔记</div>
+    <div ref="whiteTitleDom" class="white-title">
+      <span
+        class="white-title-item"
+        :class="[curNav === '笔记' ? 'active' : '']"
+        @click="changeCurNav('笔记')"
+        >笔记</span
+      >
+      <span
+        class="white-title-item"
+        :class="[curNav === '赞过' ? 'active' : '']"
+        @click="changeCurNav('赞过')"
+        >赞过</span
+      >
+    </div>
   </div>
   <!-- 瀑布流 -->
   <Waterfall
@@ -83,6 +109,7 @@ import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import type { postAllDataRes, postData } from '@/type/post'
 import socket from '@/utils/connectSocket'
+import { getLikesPostService } from '@/api/user'
 const router = useRouter()
 const useStore = useNumStore()
 const waterfallArr = ref<Array<postData>>() //帖子列表
@@ -96,6 +123,7 @@ const whiteTitleDom = ref<any>(null) //笔记标题dom
 const isBrown = ref<boolean>(false) //头部导航的头像是否固定
 const isWhite = ref<boolean>(false) //笔记标题是否固定
 const showLeft = ref<boolean>(false) //是否显示左边抽屉
+const curNav = ref<string>('笔记')
 //退出登录
 const logout = () => {
   socket.emit('logout', useStore.userInfo.username)
@@ -137,11 +165,23 @@ const onBottom = () => {
     isWhite.value = false
   }
 }
-
+//切换瀑布流nav
+const changeCurNav = async (e: string) => {
+  curNav.value = e
+  if (e === '笔记') {
+    //获取帖子
+    let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
+    waterfallArr.value = res.data.data.reverse()
+  } else {
+    //获取赞过的帖子
+    let res: any = await getLikesPostService({ username: useStore.userInfo.username })
+    waterfallArr.value = res.data.data.reverse()
+  }
+}
 onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', onBottom)
-  //获取对方用户信息
+  //获取帖子
   let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
   waterfallArr.value = res.data.data.reverse()
   //获取滚动显示所需的滚动高度
@@ -222,9 +262,31 @@ onUnmounted(() => {
       background-color: #ffffff;
       height: 100%;
       border-radius: 12px 12px 0 0;
+      color: #8a8a8a;
       margin-bottom: 0;
-      padding: 8px 10px;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      .white-title-item {
+        margin-left: 10px;
+        position: relative;
+        &:nth-child(2) {
+          margin-left: 20px;
+        }
+        &.active {
+          color: black;
+          &::after {
+            display: block;
+            content: '';
+            width: 80%;
+            height: 2px;
+            background-color: var(--theme-color);
+            position: absolute;
+            left: 3px;
+            bottom: -5px;
+          }
+        }
+      }
     }
   }
 }
@@ -324,9 +386,31 @@ onUnmounted(() => {
     background-color: #ffffff;
     height: 36px;
     border-radius: 12px 12px 0 0;
+    color: #8a8a8a;
     margin-bottom: 0;
-    padding: 8px 10px;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    .white-title-item {
+      margin-left: 10px;
+      position: relative;
+      &:nth-child(2) {
+        margin-left: 20px;
+      }
+      &.active {
+        color: black;
+        &::after {
+          display: block;
+          content: '';
+          width: 80%;
+          height: 2px;
+          background-color: var(--theme-color);
+          position: absolute;
+          left: 3px;
+          bottom: -5px;
+        }
+      }
+    }
   }
 }
 .waterfall-list[data-v-1c4c57b0] {

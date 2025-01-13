@@ -76,9 +76,9 @@ const onSubmit = async () => {
     password: password.value
   })
   useStore.setToken(res.data.token)
-  await useStore.getUserInfo(username.value)
-  await useStore.getFollows()
-  await useStore.getFans()
+  useStore.getUserInfo(username.value)
+  // await useStore.getFollows()
+  // await useStore.getFans()
   router.push('/home')
 }
 const onSubmit2 = async () => {

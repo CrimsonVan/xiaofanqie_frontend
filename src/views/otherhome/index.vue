@@ -21,7 +21,7 @@
         <div class="myself-top-username2">IP属地：北京</div>
       </div>
     </div>
-    <div class="myself-bg-middle">肚子好饿~~~</div>
+    <div class="myself-bg-middle">{{ otherInfo?.signature }}</div>
     <div class="myself-bg-bottom">
       <div class="myself-bottom-num-part">
         <div class="myself-bottom-num">{{ otherInfo?.follow_num }}</div>
@@ -42,10 +42,10 @@
         </div>
       </div>
       <div class="myself-bottom-num-part">
-        <div class="myself-bottom-num">4822</div>
-        <div class="myself-bottom-title">获赞</div>
+        <div class="myself-bottom-num">{{ otherInfo?.like_num }}</div>
+        <div class="myself-bottom-title">赞过</div>
       </div>
-      <followButton :isOther="true" :detailInfo="otherInfo"></followButton>
+      <followButton v-if="otherInfo" :isOther="true" :detailInfo="otherInfo"></followButton>
       <van-button
         @click="
           () =>
@@ -90,7 +90,7 @@
 import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import { ref, onMounted } from 'vue'
-import { userGetInfoService } from '@/api/user'
+import { otherUserinfoGetService } from '@/api/user'
 import { useRoute, useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
 import { getUserPostService } from '@/api/post'
@@ -150,7 +150,7 @@ onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', onBottom)
   //获取对方用户信息
-  let res: userInfoDataAllRes = await userGetInfoService({
+  let res: userInfoDataAllRes = await otherUserinfoGetService({
     username: route.query.username as string
   })
   otherInfo.value = res.data.data

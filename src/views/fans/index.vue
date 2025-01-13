@@ -1,5 +1,5 @@
 <template>
-  <van-nav-bar title="关注列表" :fixed="true">
+  <van-nav-bar title="粉丝列表" :fixed="true">
     <template #left>
       <van-icon name="arrow-left" @click="goback" />
     </template>
@@ -42,7 +42,7 @@ const goDetail = (username: string) => {
 }
 onMounted(async () => {
   if (route.query.type === 'myself') {
-    fansArr.value = deepClone1(useStore.fans)
+    fansArr.value = deepClone1(useStore.userInfo.fans)
   } else {
     let res = await userGetFansService({ username: route.query.username as string })
     console.log('打印other的粉丝列表', res.data.data)

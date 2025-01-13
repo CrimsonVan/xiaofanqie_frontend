@@ -8,8 +8,10 @@ export type userInfoData = {
   nick_name: string
   signature: string
   birthday: string
+  gender: string
   fans_num?: number
   follow_num?: number
+  like_num?: number
 }
 //单个用户信息返回数据类型
 export type userInfoDataAllRes = GlobalResponseData<userInfoData>

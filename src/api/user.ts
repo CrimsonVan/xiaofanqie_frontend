@@ -19,6 +19,9 @@ export const userRegisterService = ({ username, password }: any) =>
 // 获取用户基本信息
 export const userGetInfoService = ({ username }: userQuery) =>
   request.post<any, userInfoDataAllRes>('/my/userinfo', { username })
+//获取对方用户基本信息
+export const otherUserinfoGetService = ({ username }: { username: string }) =>
+  request.post<any, userInfoDataAllRes>('/my/otherUserinfo', { username })
 //修改用户头像
 export const userUpdateAvatarService = (formdata: any) =>
   request.post<any>('/my/avatarUpdate', formdata)
@@ -28,6 +31,14 @@ export const userUpdateNicknameService = ({ nickname, username }: userQuery) =>
 //修改用户签名
 export const userUpdateSignatureService = ({ signature, username }: userQuery) =>
   request.post<any>('/my/signatureUpdate', { signature, username })
+//修改用户性别
+export const userUpdateGenderService = ({
+  gender,
+  username
+}: {
+  gender: string
+  username: string
+}) => request.post<any>('/my/genderUpdate', { gender, username })
 //修改用户生日
 export const userUpdateBirthdayService = ({ birthday, username }: userQuery) =>
   request.post<any>('/my/birthdayUpdate', { birthday, username })
@@ -49,6 +60,20 @@ export const userDelFollowService = ({ username, followUsername }: followQuery) 
 //获取粉丝列表
 export const userGetFansService = ({ username }: any) =>
   request.post<any, userInfoDataAllRes>('/api/getFans', { username })
+
+//点赞
+//获取点赞列表
+export const getLikesService = (obj: { username: string }) =>
+  request.post<any, any>('/api/getLikes', obj)
+//触发点赞
+export const addLikesService = (obj: { username: string; like_id: number }) =>
+  request.post<any, any>('/api/addLikes', obj)
+//取消点赞
+export const delLikesService = (obj: { username: string; like_id: number }) =>
+  request.post<any, any>('/api/delLikes', obj)
+//获取点赞过的列表
+export const getLikesPostService = (obj: { username: string }) =>
+  request.post<any, any>('/api/getLikesPost', obj)
 
 //Test
 export const userTestService = (obj: any) => request.post<any, any>('/my/getDataCount', obj)

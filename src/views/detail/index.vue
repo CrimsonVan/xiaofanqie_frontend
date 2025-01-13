@@ -11,7 +11,7 @@
       <span class="nav-name">{{ detailInfo?.nick_name }}</span>
     </template>
     <template #right>
-      <followButton :isOther="false" :detailInfo="detailInfo"></followButton>
+      <followButton v-if="detailInfo" :isOther="false" :detailInfo="detailInfo"></followButton>
       <van-icon v-if="useStore.userInfo.username !== detailInfo?.username" name="share-o" />
       <van-icon v-else @click="() => (showBottom = true)" name="ellipsis" />
     </template>
@@ -59,7 +59,8 @@
       type="textarea"
       :placeholder="atContent"
     />
-    <van-icon name="like-o" />
+    <!-- <van-icon name="like" color="#ff1e42" /> -->
+    <likeButton v-if="detailInfo" :detailInfo="detailInfo"></likeButton>
     <van-icon name="star-o" />
     <van-icon @click="sendMsg" name="chat-o" />
   </div>
@@ -101,6 +102,7 @@ import followButton from '@/components/followButton.vue'
 import type { commentData, commentsSonToFather, commentDataAllRes } from '@/type/comments'
 import type { postOneDataRes, postData } from '@/type/post'
 import { showConfirmDialog } from 'vant'
+import likeButton from '@/components/likeButton.vue'
 const useStore = useNumStore()
 const router = useRouter()
 const message = ref('')
@@ -152,10 +154,8 @@ const getChildMsg = (val: commentsSonToFather, index: number) => {
 const sendMsg = async () => {
   // 判断输入能容是否为空
   if (message.value === '') {
-    console.log('发送消息不能为空')
     return
   }
-  // console.log('打印发送信息', message.value)
   msgObj.value.content = message.value
   let res: any = await addCommentService(msgObj.value)
   message.value = ''
@@ -188,14 +188,10 @@ const delPost = () => {
 }
 
 onMounted(async () => {
-  console.log('打印route', typeof route.query.id)
   let res: postOneDataRes = await getSinglePostService({ id: route.query.id as string })
   detailInfo.value = res.data.data
-  console.log('打印res.data.data', res.data.data)
   let res1: commentDataAllRes = await getCommentService({ id: route.query.id as string })
-  console.log('打印帖子下面的评论', res1.data.data)
   commentFirstArr.value = res1.data.data
-  console.log('dom', document.querySelector('.van-image__img')?.clientHeight)
   let firstImgHeight: any = document.querySelector('.van-image__img')?.clientHeight
   if (firstImgHeight < 550) {
     swipeHeight.value = document.querySelector('.van-image__img')?.clientHeight
@@ -217,10 +213,10 @@ onMounted(async () => {
   font-size: 20px;
 }
 ::v-deep(.van-nav-bar__right) {
-  //   background-color: saddlebrown;
   padding: 0 8px;
   font-size: 20px;
 }
+
 .nav-avatar {
   width: 28px;
   height: 28px;

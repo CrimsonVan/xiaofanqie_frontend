@@ -23,6 +23,14 @@
         <span class="birth1">生日信息</span><span class="birth2">{{ birthDate }}</span>
         <van-icon @click="() => (isShowBirth = true)" name="arrow" />
       </div>
+      <div v-if="hearderText === '性别'" class="selectGender">
+        <div class="genderOption" @click="() => (curGender = '男')">
+          <span>男</span><van-icon v-if="curGender === '男'" name="success" />
+        </div>
+        <div class="genderOption" @click="() => (curGender = '女')">
+          <span>女</span><van-icon v-if="curGender === '女'" name="success" />
+        </div>
+      </div>
       <!-- 提示语 -->
       <div class="warning">
         {{ warnText }}
@@ -45,7 +53,8 @@ import { useNumStore } from '@/stores'
 import {
   userUpdateNicknameService,
   userUpdateSignatureService,
-  userUpdateBirthdayService
+  userUpdateBirthdayService,
+  userUpdateGenderService
 } from '@/api/user'
 const useStore = useNumStore()
 const minDate = new Date(1970, 1, 1)
@@ -55,6 +64,7 @@ const currentDate = ref(useStore.userInfo.birthday.split('-')) //选择器上的
 const hearderText = ref<string>('') //编辑弹窗标题
 const showText = ref<boolean>(false) //编辑弹框是否显示
 const inpVal = ref<string>('') //输入框内容
+const curGender = ref<string>(useStore.userInfo.gender) //当前性别
 const placeholderText = ref<string>('') //placeholder文字
 const warnText = ref<string>('') //提示词
 const isShowBirth = ref(false) //是否选择生日日期
@@ -66,6 +76,8 @@ const openEditProfile = (type: string) => {
   } else if (type === '签名') {
     inpVal.value = useStore.userInfo.signature
   } else if (type === '生日') {
+    inpVal.value = useStore.userInfo.signature
+  } else if (type === '性别') {
     inpVal.value = useStore.userInfo.signature
   }
   hearderText.value = type
@@ -107,6 +119,15 @@ const changeProfile = async () => {
     }
     await userUpdateBirthdayService({
       birthday: currentDate.value.join('-'),
+      username: useStore.userInfo.username
+    })
+  } else if (hearderText.value === '性别') {
+    if (curGender.value === useStore.userInfo.gender) {
+      warnText.value = '不能和原来生日相同'
+      return
+    }
+    await userUpdateGenderService({
+      gender: curGender.value,
       username: useStore.userInfo.username
     })
   }
@@ -187,6 +208,31 @@ watch(
       .van-icon-arrow {
         margin-left: 4px;
         margin-right: 0;
+      }
+    }
+    .selectGender {
+      width: 100%;
+      height: 90px;
+      border-radius: 14px;
+      font-size: 14px;
+      background-color: #ffffff;
+      padding: 0 13px;
+      margin-bottom: 5px;
+      .genderOption {
+        width: 100%;
+        height: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+        color: #333333;
+        .van-icon-success {
+          font-size: 20px;
+          color: var(--theme-color);
+        }
+        &:first-child {
+          border-bottom: 2px solid #f7f7f7;
+        }
       }
     }
   }

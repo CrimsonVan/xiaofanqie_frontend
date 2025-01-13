@@ -5,7 +5,10 @@ import {
   userGetFollowService,
   userAddFollowService,
   userDelFollowService,
-  userGetFansService
+  userGetFansService,
+  addLikesService,
+  delLikesService,
+  getLikesService
 } from '@/api/user'
 import type { followResponseData, userInfoDataAllRes } from '@/type/user'
 export const useNumStore = defineStore(
@@ -51,21 +54,18 @@ export const useNumStore = defineStore(
       const res: followResponseData = await userGetFollowService({
         username: userInfo.value!.username
       })
-      follows.value = res.data.data
-      console.log('获取关注列表', res.data.data)
+      userInfo.value.follows = res.data.data
     }
     const addFollows = async (obj: any) => {
-      const res: any = await userAddFollowService(obj)
-      console.log('打印add关注后的res', res)
+      await userAddFollowService(obj)
       await getFollows()
     }
 
     const delFollows = async ({ username, followUsername }: any) => {
-      const res: any = await userDelFollowService({
+      await userDelFollowService({
         username: username,
         followUsername: followUsername
       })
-      console.log('打印del关注后的res', res)
       await getFollows()
     }
     //粉丝列表
@@ -75,10 +75,20 @@ export const useNumStore = defineStore(
       const res: any = await userGetFansService({
         username: userInfo.value!.username
       })
-      fans.value = res.data.data
-      console.log('获取粉丝列表', res.data.data)
+      userInfo.value.fans = res.data.data
     }
-
+    //点赞
+    const addLikes = async (obj: { username: string; like_id: number }) => {
+      await addLikesService(obj)
+      const res = await getLikesService({ username: obj.username })
+      userInfo.value.likes = res.data.data
+    }
+    //取消点赞
+    const delLikes = async (obj: { username: string; like_id: number }) => {
+      await delLikesService(obj)
+      const res = await getLikesService({ username: obj.username })
+      userInfo.value.likes = res.data.data
+    }
     return {
       num,
       changeNum,
@@ -100,7 +110,9 @@ export const useNumStore = defineStore(
       delFollows,
       fans,
       fansLength,
-      getFans
+      getFans,
+      addLikes,
+      delLikes
     }
   },
   {

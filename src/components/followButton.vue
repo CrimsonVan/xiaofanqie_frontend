@@ -16,7 +16,7 @@
 </template>
 <script lang="ts" setup>
 import { useNumStore } from '@/stores'
-import { ref, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 const useStore = useNumStore()
 const isFollow = ref<boolean>(false) //是否被关注
 let props = defineProps({
@@ -30,11 +30,9 @@ let props = defineProps({
 })
 //判断是否已经关注
 const isFollowed = () => {
-  let index = useStore.follows.findIndex(
+  let index = useStore.userInfo.follows.findIndex(
     (item: any) => item.followUsername === props?.detailInfo?.username
   )
-  console.log('打印index', index)
-
   if (index === -1) {
     isFollow.value = false
   } else {
@@ -60,17 +58,20 @@ const unfollowHandle = async () => {
   })
 }
 
-watch(
-  () => props.detailInfo,
-  (newVal) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    newVal && isFollowed()
-  },
-  {
-    deep: true,
-    immediate: true
-  }
-)
+// watch(
+//   () => props.detailInfo,
+//   (newVal) => {
+//     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+//     newVal && isFollowed()
+//   },
+//   {
+//     deep: true,
+//     immediate: true
+//   }
+// )
+onMounted(() => {
+  isFollowed()
+})
 </script>
 <style lang="scss" scoped>
 .nav-btn {

@@ -30,13 +30,8 @@
   </div>
   <div class="edit-item">
     <div class="title">性别</div>
-    <div class="content">男</div>
-    <van-icon name="arrow" />
-  </div>
-  <div class="edit-item">
-    <div class="title">学校</div>
-    <div class="content">桃花镇男子职业技术学校</div>
-    <van-icon name="arrow" />
+    <div class="content">{{ useStore.userInfo.gender }}</div>
+    <van-icon name="arrow" @click="goChangeProfile('性别')" />
   </div>
   <div class="edit-item">
     <div class="title">生日</div>

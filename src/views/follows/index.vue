@@ -42,7 +42,7 @@ const goDetail = (username: string) => {
 }
 onMounted(async () => {
   if (route.query.type === 'myself') {
-    followArr.value = deepClone1(useStore.follows)
+    followArr.value = deepClone1(useStore.userInfo.follows)
   } else {
     let res = await userGetFollowService({ username: route.query.username as string })
     console.log('打印other的关注列表', res.data.data)
