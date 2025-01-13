@@ -30,14 +30,18 @@
     :lazyload="lazt"
   >
     <template #default="{ item }">
-      <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
-        <!-- <img:src="item.content_img" alt="" /> -->
-        <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
+      <div class="card">
+        <LazyImg
+          @click="() => router.push(`/detail?id=${item.id}`)"
+          class="card-img"
+          :url="item.content_img.split(',')[0]"
+        />
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
             <img class="card-text-bottom-img" :src="item.avatar" alt="" />
             <span class="card-text-bottom-name">{{ item.nick_name }}</span>
+            <likeButton v-if="item" :detailInfo="item"></likeButton>
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
@@ -244,10 +248,19 @@ onUnmounted(() => {
           font-size: 8px;
           color: #8e8e8e;
         }
-        .card-text-bottom-like {
+        ::v-deep(.like_btn) {
           margin-left: auto;
+          font-size: 12px;
+        }
+        ::v-deep(.like_btn_active) {
+          margin-left: auto;
+          font-size: 12px;
+        }
+        .card-text-bottom-like {
+          margin-left: 3px;
           margin-right: 0px;
-          font-size: 11px;
+          margin-top: 1px;
+          font-size: 10px;
           color: #8e8e8e;
         }
       }

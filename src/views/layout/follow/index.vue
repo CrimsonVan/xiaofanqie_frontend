@@ -18,9 +18,9 @@
       :src="item.content_img.split(',')[0]"
       alt=""
     />
-    <div @click="() => router.push(`/detail?id=${item.id}`)" class="follow-bottom">
+    <div class="follow-bottom">
       <div class="follow-bottom-icon">
-        <van-icon name="like-o" />
+        <likeButton v-if="item" :detailInfo="item"></likeButton>
         <van-icon name="chat-o" />
         <van-icon name="guide-o" />
         <van-icon name="star-o" />
@@ -37,6 +37,7 @@ import { useNumStore } from '@/stores'
 import { useRouter } from 'vue-router'
 import type { postAllDataRes, postData } from '@/type/post'
 import { throttle } from '@/utils/throttle'
+import likeButton from '@/components/likeButton.vue'
 const useStore = useNumStore()
 const router = useRouter()
 const followPostArr = ref<postData[]>([]) //帖子列表

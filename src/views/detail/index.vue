@@ -59,7 +59,6 @@
       type="textarea"
       :placeholder="atContent"
     />
-    <!-- <van-icon name="like" color="#ff1e42" /> -->
     <likeButton v-if="detailInfo" :detailInfo="detailInfo"></likeButton>
     <van-icon name="star-o" />
     <van-icon @click="sendMsg" name="chat-o" />
@@ -322,7 +321,6 @@ onMounted(async () => {
   justify-content: space-around;
   padding: 8px 0;
   .van-icon {
-    // color: #388aef;
     font-size: 26px;
   }
   .inp {

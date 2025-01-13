@@ -77,13 +77,19 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
-        <LazyImg class="card-img" :url="item.content_img.split(',')[0]"> </LazyImg>
+      <div class="card">
+        <LazyImg
+          @click="() => router.push(`/detail?id=${item.id}`)"
+          class="card-img"
+          :url="item.content_img.split(',')[0]"
+        >
+        </LazyImg>
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
             <img class="card-text-bottom-img" :src="item.avatar" alt="" />
             <span class="card-text-bottom-name">{{ item.nick_name }}</span>
+            <likeButton v-if="item" :detailInfo="item"></likeButton>
             <span class="card-text-bottom-like">2791</span>
           </div>
         </div>
@@ -110,6 +116,7 @@ import { useNumStore } from '@/stores'
 import type { postAllDataRes, postData } from '@/type/post'
 import socket from '@/utils/connectSocket'
 import { getLikesPostService } from '@/api/user'
+import likeButton from '@/components/likeButton.vue'
 const router = useRouter()
 const useStore = useNumStore()
 const waterfallArr = ref<Array<postData>>() //帖子列表
@@ -175,7 +182,7 @@ const changeCurNav = async (e: string) => {
   } else {
     //获取赞过的帖子
     let res: any = await getLikesPostService({ username: useStore.userInfo.username })
-    waterfallArr.value = res.data.data.reverse()
+    waterfallArr.value = res.data.data
   }
 }
 onMounted(async () => {
@@ -413,6 +420,7 @@ onUnmounted(() => {
     }
   }
 }
+
 .waterfall-list[data-v-1c4c57b0] {
   // background-color: #f5f5f5;
   .card {
@@ -479,10 +487,19 @@ onUnmounted(() => {
           font-size: 8px;
           color: #8e8e8e;
         }
-        .card-text-bottom-like {
+        ::v-deep(.like_btn) {
           margin-left: auto;
+          font-size: 12px;
+        }
+        ::v-deep(.like_btn_active) {
+          margin-left: auto;
+          font-size: 12px;
+        }
+        .card-text-bottom-like {
+          margin-left: 3px;
           margin-right: 0px;
-          font-size: 11px;
+          margin-top: 1px;
+          font-size: 10px;
           color: #8e8e8e;
         }
       }
