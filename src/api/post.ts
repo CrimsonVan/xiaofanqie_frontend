@@ -4,6 +4,9 @@ import type { postAllDataRes, postQuery, postOneDataRes } from '@/type/post'
 //获取所有帖子
 export const getPostService = ({ pagenum, cate_id }: { pagenum: any; cate_id?: any }) =>
   request.post<any, postAllDataRes>('/post/get', { pagenum, cate_id, status: '通过' })
+//获取首页所有帖子
+export const getAllPostService = ({ pagenum, cate_id }: { pagenum: any; cate_id?: any }) =>
+  request.post<any, postAllDataRes>('/post/getAll', { pagenum, cate_id, status: '通过' })
 //获取客户端所有帖子
 export const getClientPostService = ({ pagenum, cate_id }: { pagenum: any; cate_id?: any }) =>
   request.post<any, postAllDataRes>('/post/getClient', { pagenum, cate_id, status: '通过' })

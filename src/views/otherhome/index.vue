@@ -72,14 +72,24 @@
     :breakpoints="breakpoints"
   >
     <template #default="{ item }">
-      <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
-        <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
+      <div class="card">
+        <LazyImg
+          @click="() => router.push(`/detail?id=${item.id}`)"
+          class="card-img"
+          :url="item.content_img.split(',')[0]"
+        />
         <div class="card-text">
           <div class="card-text-top">{{ item.content }}</div>
           <div class="card-text-bottom">
             <img class="card-text-bottom-img" :src="item.avatar" alt="" />
             <span class="card-text-bottom-name">{{ item.nick_name }}</span>
-            <span class="card-text-bottom-like">2791</span>
+            <likeButton
+              @afterLike="afterLike"
+              @afterCancelLike="afterCancelLike"
+              v-if="item"
+              :detailInfo="item"
+            ></likeButton>
+            <span class="card-text-bottom-like">{{ item.like_num }}</span>
           </div>
         </div>
       </div>
@@ -97,6 +107,7 @@ import { getUserPostService } from '@/api/post'
 import followButton from '@/components/followButton.vue'
 import type { userInfoDataAllRes, userInfoData } from '@/type/user'
 import type { postData, postAllDataRes } from '@/type/post'
+import likeButton from '@/components/likeButton.vue'
 const useStore = useNumStore()
 const route = useRoute()
 const router = useRouter()
@@ -108,7 +119,7 @@ const safeSpaceDom = ref<any>(null) //安全区域dom
 const topInfoDom = ref<any>(null) //上半部分个人信息区域dom
 const myselfbgDom = ref<any>(null) //整个个人信息区域dom
 const whiteTitleDom = ref<any>(null) //笔记标题dom
-const waterfallList = ref<Array<postData>>() //帖子列表
+const waterfallList = ref<postData[]>([]) //帖子列表
 const isBrown = ref<boolean>(false) //头部导航的头像是否固定
 const isWhite = ref<boolean>(false) //笔记标题是否固定
 //瀑布流参数设置
@@ -131,6 +142,16 @@ const breakpoints = ref({
     rowPerView: 2
   }
 })
+//点赞后
+const afterLike = (e: number) => {
+  let index: number = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!++
+}
+//点赞取消后
+const afterCancelLike = (e: number) => {
+  let index: any = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!--
+}
 // 触底函数
 const onBottom = () => {
   // 获取滚动高度
@@ -375,12 +396,27 @@ onMounted(async () => {
           font-size: 8px;
           color: #8e8e8e;
         }
-        .card-text-bottom-like {
+        ::v-deep(.like_btn) {
           margin-left: auto;
+          font-size: 12px;
+        }
+        ::v-deep(.like_btn_active) {
+          margin-left: auto;
+          font-size: 12px;
+        }
+        .card-text-bottom-like {
+          margin-left: 3px;
           margin-right: 0px;
-          font-size: 11px;
+          margin-top: 1px;
+          font-size: 10px;
           color: #8e8e8e;
         }
+        // .card-text-bottom-like {
+        //   margin-left: auto;
+        //   margin-right: 0px;
+        //   font-size: 11px;
+        //   color: #8e8e8e;
+        // }
       }
     }
   }

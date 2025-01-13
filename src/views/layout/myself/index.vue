@@ -89,8 +89,13 @@
           <div class="card-text-bottom">
             <img class="card-text-bottom-img" :src="item.avatar" alt="" />
             <span class="card-text-bottom-name">{{ item.nick_name }}</span>
-            <likeButton v-if="item" :detailInfo="item"></likeButton>
-            <span class="card-text-bottom-like">2791</span>
+            <likeButton
+              v-if="item"
+              :detailInfo="item"
+              @afterLike="afterLike"
+              @afterCancelLike="afterCancelLike"
+            ></likeButton>
+            <span class="card-text-bottom-like">{{ item.like_num }}</span>
           </div>
         </div>
         <div v-if="item.status === '未通过'" class="img-unpass"></div>
@@ -119,7 +124,7 @@ import { getLikesPostService } from '@/api/user'
 import likeButton from '@/components/likeButton.vue'
 const router = useRouter()
 const useStore = useNumStore()
-const waterfallArr = ref<Array<postData>>() //帖子列表
+const waterfallArr = ref<Array<postData>>([]) //帖子列表
 const navTopDom = ref<any>(null) //头部导航的dom
 const navAvatarShowHeight = ref<number>() //导航栏显示头像所需滚动高度
 const whiteTitleFixedHeight = ref<number>() //笔记固定所需的滚动的高度
@@ -172,30 +177,42 @@ const onBottom = () => {
     isWhite.value = false
   }
 }
+//点赞后
+const afterLike = (e: number) => {
+  let index: number = waterfallArr.value?.findIndex((item) => item.id === e)
+  waterfallArr.value[index].like_num!++
+}
+//点赞取消后
+const afterCancelLike = (e: number) => {
+  let index: any = waterfallArr.value?.findIndex((item) => item.id === e)
+  waterfallArr.value[index].like_num!--
+}
 //切换瀑布流nav
 const changeCurNav = async (e: string) => {
   curNav.value = e
   if (e === '笔记') {
     //获取帖子
     let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
-    waterfallArr.value = res.data.data.reverse()
+    waterfallArr.value = res.data.data
   } else {
     //获取赞过的帖子
     let res: any = await getLikesPostService({ username: useStore.userInfo.username })
     waterfallArr.value = res.data.data
   }
 }
+
 onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', onBottom)
   //获取帖子
   let res: postAllDataRes = await getUserPostService({ username: useStore.userInfo.username })
-  waterfallArr.value = res.data.data.reverse()
+  waterfallArr.value = res.data.data
   //获取滚动显示所需的滚动高度
   navAvatarShowHeight.value = safeSpaceDom.value.clientHeight + topInfoDom.value.clientHeight
   whiteTitleFixedHeight.value =
     myselfbgDom.value.clientHeight - whiteTitleDom.value.clientHeight - navTopDom.value.clientHeight
 })
+
 onUnmounted(() => {
   document.removeEventListener('scroll', onBottom)
 })

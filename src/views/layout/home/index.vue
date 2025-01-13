@@ -41,8 +41,13 @@
           <div class="card-text-bottom">
             <img class="card-text-bottom-img" :src="item.avatar" alt="" />
             <span class="card-text-bottom-name">{{ item.nick_name }}</span>
-            <likeButton v-if="item" :detailInfo="item"></likeButton>
-            <span class="card-text-bottom-like">2791</span>
+            <likeButton
+              v-if="item"
+              :detailInfo="item"
+              @afterLike="afterLike"
+              @afterCancelLike="afterCancelLike"
+            ></likeButton>
+            <span class="card-text-bottom-like">{{ item?.like_num }}</span>
           </div>
         </div>
       </div>
@@ -54,7 +59,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import 'vue-waterfall-plugin-next/dist/style.css'
 import { Waterfall, LazyImg } from 'vue-waterfall-plugin-next'
 import { useRouter } from 'vue-router'
-import { getPostService } from '@/api/post'
+import { getAllPostService } from '@/api/post'
 import { getPostCateService } from '@/api/cate'
 import { throttle } from '@/utils/throttle'
 import type { postAllDataRes, postData } from '@/type/post'
@@ -103,7 +108,7 @@ const selectCate = async (index: number, item: cateData) => {
   reqQuery.value.pagenum = 1
   isDataEnd.value = false //是否所有数据加载完毕
   isLoading.value = false //是否在加载数据
-  let res: postAllDataRes = await getPostService(reqQuery.value)
+  let res: postAllDataRes = await getAllPostService(reqQuery.value)
   waterfallList.value = res.data.data
 }
 // 触底函数
@@ -117,7 +122,7 @@ async function onBottom() {
   if (clientHeight + scrollTop >= scrollHeight - 170 && !isDataEnd.value && !isLoading.value) {
     reqQuery.value.pagenum++
     isLoading.value = true
-    let res: postAllDataRes = await getPostService(reqQuery.value)
+    let res: postAllDataRes = await getAllPostService(reqQuery.value)
     isLoading.value = false
     if (res.data.data.length < 8) {
       isDataEnd.value = true
@@ -145,6 +150,16 @@ const cateScroll = async () => {
     isLoading2.value = false
   }
 }
+//点赞后
+const afterLike = (e: number) => {
+  let index: number = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!++
+}
+//点赞取消后
+const afterCancelLike = (e: number) => {
+  let index: any = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!--
+}
 onMounted(async () => {
   //监听滚动
   document.addEventListener('scroll', throttledScroll)
@@ -154,11 +169,9 @@ onMounted(async () => {
     cate_name: '推荐'
   })
   cateList.value = result.data.data
-  console.log('打印分类列表', cateList.value)
-
   cate_recommend_area_dom.value.addEventListener('scroll', cateScroll)
   //获取贴子列表
-  let res: postAllDataRes = await getPostService(reqQuery.value)
+  let res: postAllDataRes = await getAllPostService(reqQuery.value)
   waterfallList.value = res.data.data
 })
 

@@ -15,6 +15,7 @@ export type postData = {
   status: string
   cate_id: number
   cate_name?: string
+  like_num?: number
 }
 //单个帖子返回数据类型
 export type postOneDataRes = GlobalResponseData<postData>

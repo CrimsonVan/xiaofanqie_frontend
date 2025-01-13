@@ -1,18 +1,4 @@
 <template>
-  <!-- <van-button
-    v-if="useStore.userInfo.username !== detailInfo?.username && detailInfo && !isFollow"
-    :class="[isOther ? 'nav-btn-other' : 'nav-btn']"
-    plain
-    @click="followHandle"
-    >关注</van-button
-  >
-  <van-button
-    v-if="useStore.userInfo.username !== detailInfo?.username && detailInfo && isFollow"
-    :class="[isOther ? 'nav-btn-other-followed' : 'nav-btn-followed']"
-    plain
-    @click="unfollowHandle"
-    >已关注</van-button
-  > -->
   <van-icon class="like_btn" v-if="detailInfo && !isFollow" name="like-o" @click="followHandle" />
   <van-icon
     class="like_btn_active"
@@ -32,6 +18,7 @@ let props = defineProps({
     type: Object
   }
 })
+const emit = defineEmits(['afterLike', 'afterCancelLike'])
 //判断是否已经关注
 const isFollowed = () => {
   let index = useStore.userInfo.likes.findIndex(
@@ -46,6 +33,7 @@ const isFollowed = () => {
 //关注操作
 const followHandle = async () => {
   isFollow.value = true
+  emit('afterLike', props?.detailInfo?.id)
   await useStore.addLikes({
     username: useStore.userInfo.username,
     like_id: props?.detailInfo?.id
@@ -54,6 +42,7 @@ const followHandle = async () => {
 //取消关注操作
 const unfollowHandle = async () => {
   isFollow.value = false
+  emit('afterCancelLike', props?.detailInfo?.id)
   await useStore.delLikes({
     username: useStore.userInfo.username,
     like_id: props?.detailInfo?.id
