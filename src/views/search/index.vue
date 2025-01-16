@@ -43,15 +43,24 @@
       :breakpoints="breakpoints"
     >
       <template #default="{ item }">
-        <div @click="() => router.push(`/detail?id=${item.id}`)" class="card">
-          <!-- <img class="card-img" :src="item.content_img" alt="" /> -->
-          <LazyImg class="card-img" :url="item.content_img.split(',')[0]" />
+        <div class="card">
+          <LazyImg
+            @click="() => router.push(`/detail?id=${item.id}`)"
+            class="card-img"
+            :url="item.content_img.split(',')[0]"
+          />
           <div class="card-text">
             <div class="card-text-top">{{ item.content }}</div>
             <div class="card-text-bottom">
               <img class="card-text-bottom-img" :src="item.avatar" alt="" />
               <span class="card-text-bottom-name">{{ item.nick_name }}</span>
-              <span class="card-text-bottom-like">2791</span>
+              <likeButton
+                @afterLike="afterLike"
+                @afterCancelLike="afterCancelLike"
+                v-if="item"
+                :detailInfo="item"
+              ></likeButton>
+              <span class="card-text-bottom-like">{{ item.like_num }}</span>
             </div>
           </div>
         </div>
@@ -114,6 +123,16 @@ const goSearch = async (str: string) => {
   let res: postAllDataRes = await getSearchPostService({ query: str })
   console.log('打印搜索结果', res.data.data.length)
   waterfallList.value = res.data.data
+}
+//点赞后
+const afterLike = (e: number) => {
+  let index: number = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!++
+}
+//点赞取消后
+const afterCancelLike = (e: number) => {
+  let index: any = waterfallList.value?.findIndex((item) => item.id === e)
+  waterfallList.value[index].like_num!--
 }
 </script>
 <style lang="scss" scoped>
@@ -208,10 +227,19 @@ const goSearch = async (str: string) => {
           font-size: 8px;
           color: #8e8e8e;
         }
-        .card-text-bottom-like {
+        ::v-deep(.like_btn) {
           margin-left: auto;
+          font-size: 12px;
+        }
+        ::v-deep(.like_btn_active) {
+          margin-left: auto;
+          font-size: 12px;
+        }
+        .card-text-bottom-like {
+          margin-left: 3px;
           margin-right: 0px;
-          font-size: 11px;
+          margin-top: 1px;
+          font-size: 10px;
           color: #8e8e8e;
         }
       }

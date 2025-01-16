@@ -411,12 +411,6 @@ onMounted(async () => {
           font-size: 10px;
           color: #8e8e8e;
         }
-        // .card-text-bottom-like {
-        //   margin-left: auto;
-        //   margin-right: 0px;
-        //   font-size: 11px;
-        //   color: #8e8e8e;
-        // }
       }
     }
   }

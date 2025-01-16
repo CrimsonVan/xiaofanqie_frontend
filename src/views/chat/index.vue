@@ -1,5 +1,5 @@
 <template>
-  <van-nav-bar style="background-color: #f5f5f5" :fixed="true">
+  <van-nav-bar class="nav_header1">
     <template #left>
       <van-icon name="arrow-left" @click="onClickLeft" />
       <img @click="goOther" class="nav-avatar" :src="friendAvatar" alt="" />
@@ -9,7 +9,6 @@
       <van-icon name="share-o" />
     </template>
   </van-nav-bar>
-  <div class="safe1"></div>
   <div class="chatArea" ref="chatAreaDom">
     <div class="chat-msg-item-left" v-for="item in msgArr" :key="item.id">
       <!-- 本人发的消息 -->
@@ -29,7 +28,6 @@
     </div>
   </div>
   <div v-if="showEmoji" class="emoji-safeArea"></div>
-  <div class="safe2"></div>
   <div class="fixed-bottom">
     <div class="bottom-input">
       <van-icon name="volume-o" />
@@ -77,9 +75,9 @@ const showEmoji = ref<boolean>(false) //表情列表是否显示
 const testFocus = () => {
   console.log('focus了')
   showEmoji.value = false
-  nextTick(() => {
-    reachBottom()
-  })
+  // nextTick(() => {
+  //   reachBottom()
+  // })
 }
 const search2 = (e: any) => {
   if (e.key === 'Enter') {
@@ -137,7 +135,8 @@ const goOther = () => {
 function reachBottom() {
   console.log('打印height', chatAreaDom.value.scrollHeight, chatAreaDom.value.clientHeight)
 
-  chatAreaDom.value.scrollTop = chatAreaDom.value.scrollHeight - chatAreaDom.value.clientHeight
+  chatAreaDom.value.scrollTop =
+    chatAreaDom.value.scrollHeight - chatAreaDom.value.clientHeight + 200
 }
 
 onMounted(async () => {
@@ -157,8 +156,12 @@ onMounted(async () => {
 })
 </script>
 <style lang="scss" scoped>
+.nav_header1 {
+  background-color: #f5f5f5;
+  height: 46px;
+  overflow: hidden;
+}
 ::v-deep(.van-nav-bar__left) {
-  //   background-color: saddlebrown;
   padding: 0 2px;
   font-size: 20px;
 }
@@ -193,15 +196,14 @@ onMounted(async () => {
 }
 .chatArea {
   background-color: #f5f5f5;
+  background-color: pink;
   width: 100%;
-  height: calc(100vh - 92px);
+  height: calc(var(--vh) * 100 - 92px);
   padding: 0 12px;
+  overflow: hidden;
   overflow-y: scroll;
   overflow-x: hidden;
   scrollbar-width: none;
-  // &::-webkit-scrollbar {
-  //   display: none;
-  // }
   .chat-msg-item-left {
     width: 100%;
     min-height: 34px;
@@ -284,9 +286,9 @@ onMounted(async () => {
 }
 .fixed-bottom {
   width: 100%;
-  position: fixed;
-  bottom: 0;
+  height: 46px;
   background-color: #f5f5f5;
+  overflow: hidden;
   .bottom-input {
     width: 100%;
     display: flex;
