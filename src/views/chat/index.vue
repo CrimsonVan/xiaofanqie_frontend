@@ -140,6 +140,8 @@ function reachBottom() {
 }
 
 onMounted(async () => {
+  const vh = window.innerHeight * 0.01
+  document.documentElement.style.setProperty('--vh', `${vh}px`)
   socket.emit('join', useStore.userInfo.username)
   friendUsername.value = route.query.toUsername as string
   friendName.value = route.query.friendName as string
