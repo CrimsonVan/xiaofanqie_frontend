@@ -122,10 +122,12 @@ const showEmo = () => {
 }
 // 接受对方发来的一对一消息
 socket.on('toOneMsg', (res: msgData) => {
-  msgArr.value.push(res)
-  nextTick(() => {
-    reachBottom()
-  })
+  if (res.fromUsername === friendUsername.value && res.toUsername === useStore.userInfo.username) {
+    msgArr.value.push(res)
+    nextTick(() => {
+      reachBottom()
+    })
+  }
 })
 
 const goOther = () => {
@@ -198,7 +200,6 @@ onMounted(async () => {
 }
 .chatArea {
   background-color: #f5f5f5;
-  background-color: pink;
   width: 100%;
   height: calc(var(--vh) * 100 - 92px);
   padding: 0 12px;

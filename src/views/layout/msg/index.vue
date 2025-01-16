@@ -71,7 +71,6 @@ const goChat = (index: number) => {
 }
 // 接受对方发来的一对一消息
 socket.on('toOneMsg', (res: msgData) => {
-  console.log('在好友列表打印对方发来的信息', res)
   //看看有无发送过来即时信息的fromUsername和好友列表里人的friendName一样的
   let findIndex = friendArr.value.findIndex((item: any) => item.friendName === res.fromUsername)
   if (findIndex === -1) {
