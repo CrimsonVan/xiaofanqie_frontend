@@ -100,7 +100,6 @@ const gotouchstart = (index: number) => {
   }, 500)
 }
 const gotouchend = (index: number) => {
-  console.log('end了')
   if (timeout) {
     clearTimeout(timeout)
     goChat(index)
@@ -109,7 +108,6 @@ const gotouchend = (index: number) => {
   }
 }
 const gotouchmove = (index: number) => {
-  console.log('move了')
   if (timeout) {
     clearTimeout(timeout)
     goChat(index)
@@ -119,7 +117,6 @@ const gotouchmove = (index: number) => {
 }
 onMounted(async () => {
   let res: friendDataAllRes = await getFriendsService({ username: useStore.userInfo.username })
-  console.log('打印好友列表', res.data.data)
   friendArr.value = res.data.data
 })
 </script>
@@ -164,6 +161,13 @@ onMounted(async () => {
     .chat-to-msg {
       font-size: 14px;
       color: #8a8a8a;
+      width: 260px;
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      line-clamp: 1;
     }
   }
   .chat-to-data {

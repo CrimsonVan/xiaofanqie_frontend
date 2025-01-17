@@ -28,6 +28,7 @@
     </div>
   </div>
   <div v-if="showEmoji" class="emoji-safeArea"></div>
+  <div class="safe1"></div>
   <div class="fixed-bottom">
     <div class="bottom-input">
       <van-icon name="volume-o" />
@@ -75,9 +76,6 @@ const showEmoji = ref<boolean>(false) //表情列表是否显示
 const testFocus = () => {
   console.log('focus了')
   showEmoji.value = false
-  // nextTick(() => {
-  //   reachBottom()
-  // })
 }
 const search2 = (e: any) => {
   if (e.key === 'Enter') {
@@ -194,10 +192,7 @@ onMounted(async () => {
 .van-safe-area-bottom {
   border-top: 1px solid #ccc;
 }
-.safe1 {
-  width: 100%;
-  height: 46px;
-}
+
 .chatArea {
   background-color: #f5f5f5;
   width: 100%;
@@ -226,10 +221,8 @@ onMounted(async () => {
         max-width: 270px;
         background-color: #ffffff;
         border-radius: 8px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         padding: 12px 12px;
+        word-break: break-all;
       }
       .msg-item-avatar-right {
         width: 31px;
@@ -245,10 +238,8 @@ onMounted(async () => {
         background-color: #388aef;
         color: #ffffff;
         border-radius: 8px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         padding: 12px 12px;
+        word-break: break-all;
       }
     }
   }
@@ -276,6 +267,7 @@ onMounted(async () => {
       justify-content: center;
       align-items: center;
       padding: 12px 12px;
+      white-space: wrap;
     }
   }
 }
@@ -287,9 +279,16 @@ onMounted(async () => {
   width: 100%;
   height: 210px;
 }
-.fixed-bottom {
+.safe1 {
   width: 100%;
   height: 46px;
+}
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  min-height: 46px;
   background-color: #f5f5f5;
   overflow: hidden;
   .bottom-input {
