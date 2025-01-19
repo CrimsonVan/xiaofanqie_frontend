@@ -61,7 +61,7 @@ export const userDelFollowService = ({ username, followUsername }: followQuery) 
 export const userGetFansService = ({ username }: any) =>
   request.post<any, userInfoDataAllRes>('/api/getFans', { username })
 
-//点赞
+//贴文点赞
 //获取点赞列表
 export const getLikesService = (obj: { username: string }) =>
   request.post<any, any>('/api/getLikes', obj)
@@ -74,6 +74,17 @@ export const delLikesService = (obj: { username: string; like_id: number }) =>
 //获取点赞过的列表
 export const getLikesPostService = (obj: { username: string }) =>
   request.post<any, any>('/api/getLikesPost', obj)
+
+//评论点赞
+//获取点赞列表
+export const getCommentLikesService = (obj: { username: string }) =>
+  request.post<any, any>('/api/getCommentLikes', obj)
+//触发点赞
+export const addCommentLikesService = (obj: { username: string; like_comment_id: number }) =>
+  request.post<any, any>('/api/addCommentLikes', obj)
+//取消点赞
+export const delCommentLikesService = (obj: { username: string; like_comment_id: number }) =>
+  request.post<any, any>('/api/delCommentLikes', obj)
 
 //Test
 export const userTestService = (obj: any) => request.post<any, any>('/my/getDataCount', obj)

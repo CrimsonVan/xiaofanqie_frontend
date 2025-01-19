@@ -46,6 +46,8 @@
       :key="item.comment_id"
       :commentInfo="item"
       @sendInfo="(val: commentsSonToFather) => getChildMsg(val, index)"
+      @likeAdd="likeAdd"
+      @likeDel="likeDel"
     ></commentPart>
   </div>
   <div class="bottom-input">
@@ -185,7 +187,14 @@ const delPost = () => {
       // on cancel
     })
 }
-
+const likeAdd = (e: number) => {
+  let index: number = commentFirstArr.value?.findIndex((item) => item.comment_id === e)
+  commentFirstArr.value[index].comment_like_num!++
+}
+const likeDel = (e: number) => {
+  let index: number = commentFirstArr.value?.findIndex((item) => item.comment_id === e)
+  commentFirstArr.value[index].comment_like_num!--
+}
 onMounted(async () => {
   let res: postOneDataRes = await getSinglePostService({ id: route.query.id as string })
   detailInfo.value = res.data.data

@@ -8,7 +8,10 @@ import {
   userGetFansService,
   addLikesService,
   delLikesService,
-  getLikesService
+  getLikesService,
+  addCommentLikesService,
+  delCommentLikesService,
+  getCommentLikesService
 } from '@/api/user'
 import type { followResponseData, userInfoDataAllRes } from '@/type/user'
 export const useNumStore = defineStore(
@@ -68,6 +71,7 @@ export const useNumStore = defineStore(
       })
       await getFollows()
     }
+
     //粉丝列表
     const fans = ref<any>([])
     const fansLength = computed(() => fans.value.length)
@@ -77,17 +81,31 @@ export const useNumStore = defineStore(
       })
       userInfo.value.fans = res.data.data
     }
-    //点赞
+
+    //贴文点赞
     const addLikes = async (obj: { username: string; like_id: number }) => {
       await addLikesService(obj)
       const res = await getLikesService({ username: obj.username })
       userInfo.value.likes = res.data.data
     }
-    //取消点赞
+    //取消贴文点赞
     const delLikes = async (obj: { username: string; like_id: number }) => {
       await delLikesService(obj)
       const res = await getLikesService({ username: obj.username })
       userInfo.value.likes = res.data.data
+    }
+
+    //评论点赞
+    const addCommentLikes = async (obj: { username: string; like_comment_id: number }) => {
+      await addCommentLikesService(obj)
+      const res = await getCommentLikesService({ username: obj.username })
+      userInfo.value.comment_likes = res.data.data
+    }
+    //取消评论点赞
+    const delCommentLikes = async (obj: { username: string; like_comment_id: number }) => {
+      await delCommentLikesService(obj)
+      const res = await getCommentLikesService({ username: obj.username })
+      userInfo.value.comment_likes = res.data.data
     }
     return {
       num,
@@ -112,7 +130,9 @@ export const useNumStore = defineStore(
       fansLength,
       getFans,
       addLikes,
-      delLikes
+      delLikes,
+      addCommentLikes,
+      delCommentLikes
     }
   },
   {

@@ -62,7 +62,7 @@ import { userLoginService, userRegisterService } from '@/api/user'
 import { useNumStore } from '@/stores'
 import { showSuccessToast } from 'vant'
 const useStore = useNumStore()
-const username = ref('13114209341')
+const username = ref('13114209300')
 const password = ref('123456')
 const isLogin = ref(true)
 import { useRouter } from 'vue-router'
@@ -77,8 +77,6 @@ const onSubmit = async () => {
   })
   useStore.setToken(res.data.token)
   useStore.getUserInfo(username.value)
-  // await useStore.getFollows()
-  // await useStore.getFans()
   router.push('/home')
 }
 const onSubmit2 = async () => {

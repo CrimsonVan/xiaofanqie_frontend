@@ -16,8 +16,13 @@
       </div>
     </div>
     <div class="comment-like">
-      <van-icon name="like-o" />
-      <div class="comment-like-num">67</div>
+      <likeButton
+        :detailInfo="commentInfo"
+        type="comment"
+        @afterLike="afterLike"
+        @afterCancelLike="afterCancelLike"
+      ></likeButton>
+      <div class="comment-like-num">{{ commentInfo?.comment_like_num }}</div>
     </div>
   </div>
   <!-- 子评论显示区域 -->
@@ -43,19 +48,25 @@
         </div>
       </div>
       <div class="reply-like">
-        <van-icon name="like-o" />
-        <div class="reply-like-num">67</div>
+        <likeButton
+          :detailInfo="item"
+          type="comment"
+          @afterLike="afterLike"
+          @afterCancelLike="afterCancelLike"
+        ></likeButton>
+        <div class="reply-like-num">{{ item?.comment_like_num }}</div>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
 import { ref } from 'vue'
-import type { PropType } from 'vue'
 import { getSecondCommentService } from '@/api/comments'
-import type { commentData, commentDataAllRes, commentsSonToFather } from '@/type/comments'
+// commentsSonToFather
+import type { commentData, commentDataAllRes } from '@/type/comments'
 import { useRouter } from 'vue-router'
 import { useNumStore } from '@/stores'
+import likeButton from '@/components/likeButton.vue'
 const useStore = useNumStore()
 const router = useRouter()
 const isShowChild = ref<boolean>(false) //是否显示子评论
@@ -63,7 +74,7 @@ const childArr = ref<commentData[]>([]) //子评论
 
 let props = defineProps({
   commentInfo: {
-    type: Object as PropType<commentData>
+    type: Object
   }
 })
 
@@ -84,10 +95,7 @@ const changeChildShow = async (post_id: number, parent_comment_id: number) => {
   console.log('打印子评论', childArr.value)
 }
 
-const emit = defineEmits<{
-  // eslint-disable-next-line no-unused-vars
-  (e: 'sendInfo', data: commentsSonToFather): void
-}>()
+const emit = defineEmits(['sendInfo', 'likeAdd', 'likeDel'])
 
 const sendFather = (info: commentData, type: number) => {
   if (type === 1) {
@@ -106,6 +114,24 @@ const sendFather = (info: commentData, type: number) => {
       reply_nickname: info.nick_name,
       father_length: props?.commentInfo?.child_length as number
     })
+  }
+}
+//点赞后
+const afterLike = (e: number) => {
+  if (props?.commentInfo?.comment_id === e) {
+    emit('likeAdd', e)
+  } else {
+    let index: number = childArr.value?.findIndex((item) => item.comment_id === e)
+    childArr.value[index].comment_like_num!++
+  }
+}
+//点赞取消后
+const afterCancelLike = (e: number) => {
+  if (props?.commentInfo?.comment_id === e) {
+    emit('likeDel', e)
+  } else {
+    let index: number = childArr.value?.findIndex((item) => item.comment_id === e)
+    childArr.value[index].comment_like_num!--
   }
 }
 defineExpose({
@@ -148,14 +174,17 @@ defineExpose({
     margin-left: auto;
     margin-right: 0;
     width: 20px;
-    // background-color: slateblue;
     display: flex;
     flex-direction: column;
     align-items: center;
     color: #8a8a8a;
-
-    .van-icon {
-      //   color: aqua;
+    // .van-icon {
+    //   font-size: 18px;
+    // }
+    ::v-deep(.like_btn) {
+      font-size: 18px;
+    }
+    ::v-deep(.like_btn_active) {
       font-size: 18px;
     }
     .comment-like-num {
@@ -210,9 +239,10 @@ defineExpose({
     flex-direction: column;
     align-items: center;
     color: #8a8a8a;
-
-    .van-icon {
-      //   color: aqua;
+    ::v-deep(.like_btn) {
+      font-size: 18px;
+    }
+    ::v-deep(.like_btn_active) {
       font-size: 18px;
     }
     .reply-like-num {

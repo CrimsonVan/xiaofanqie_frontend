@@ -13,6 +13,7 @@ export type commentData = {
   reply_username: string
   username: string
   father_length?: number | string
+  comment_like_num: number
 }
 
 //多个评论返回数据类型
